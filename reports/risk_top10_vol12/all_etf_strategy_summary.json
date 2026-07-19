@@ -1,0 +1,28 @@
+{
+  "start": "2018-01-02",
+  "end": "2026-07-17",
+  "total_return": 0.6229251336054025,
+  "annualized_return": 0.05836353734041677,
+  "annualized_volatility": 0.095134731346095,
+  "max_drawdown": -0.18677313903041892,
+  "calmar": 0.3124835704073665,
+  "average_daily_turnover": 0.08583481400122829,
+  "total_cost": 0.2666458496948157,
+  "rebalance_count": 436,
+  "price_mode": "total-return",
+  "parameters": {
+    "min_history_rows": 252,
+    "max_stale_days": 30,
+    "min_median_amount_60d": 10000000,
+    "top_n": 10,
+    "max_per_category": 3,
+    "single_cap": 0.3,
+    "category_cap": 0.4,
+    "cost_bps": 15.0,
+    "trend_window": 200,
+    "breadth_threshold": 0.0,
+    "target_vol": 0.12,
+    "stop_drawdown": 0.0,
+    "stop_reentry_breadth": 0.5
+  }
+}

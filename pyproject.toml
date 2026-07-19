@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "otf-rotation"
+version = "0.1.0"
+description = "场外 ETF 联接基金跨资产周频轮动研究框架"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+data = ["akshare>=1.18.0"]
+tushare = ["tushare>=1.4.0"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+otf-rotation = "otf_rotation.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

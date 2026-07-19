@@ -1,0 +1,34 @@
+{
+  "universe": {
+    "min_history_rows": 252,
+    "max_stale_days": 30,
+    "min_median_amount_60d": 10000000,
+    "exclude_asset_classes": ["cash"],
+    "max_assets_per_category": 3
+  },
+  "signal": {
+    "momentum_windows": [60, 120, 252],
+    "volatility_window": 20,
+    "trend_window": 120,
+    "score": "0.5*z(momentum_60/vol_20)+0.3*z(momentum_120/vol_20)+0.2*z(momentum_252/vol_20)",
+    "trend_filter": "close > ma_120"
+  },
+  "portfolio": {
+    "rebalance_frequency": "weekly",
+    "top_n": 10,
+    "weighting": "inverse_volatility_capped",
+    "single_asset_cap": 0.30,
+    "category_cap": 0.40,
+    "max_per_category": 3,
+    "target_volatility": 0.12,
+    "defensive_assets": ["bond", "cash"],
+    "transaction_cost_bps": 15,
+    "drawdown_stop": 0.0
+  },
+  "validation": {
+    "walk_forward_train_years": 3,
+    "walk_forward_test_years": 1,
+    "purge_days": 5,
+    "report_metrics": ["annualized_return", "volatility", "max_drawdown", "turnover", "calmar", "hit_rate"]
+  }
+}
