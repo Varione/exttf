@@ -6,6 +6,7 @@ __pycache__/
 data/raw/*.csv
 data/raw/all_etf/
 data/processed/*.csv
+data/processed/*.sqlite
 reports/*.csv
 reports/*.json
 .env
