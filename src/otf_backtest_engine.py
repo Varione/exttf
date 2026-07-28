@@ -145,6 +145,12 @@ class OTFBacktestEngine:
             raise RuntimeError(f"OTF_DB_MISSING_TABLES: {sorted(missing)}")
 
         with sqlite3.connect(self.db_path) as conn:
+            catalog_columns = {
+                row[1]
+                for row in conn.execute(
+                    "PRAGMA table_info(otf_fund_catalog)"
+                ).fetchall()
+            }
             self._nav_df = pd.read_sql_query(
                 "SELECT fund_code, nav_date, unit_nav, cumulative_nav, "
                 "daily_growth_pct, distribution_per_share, "
@@ -152,9 +158,16 @@ class OTFBacktestEngine:
                 "FROM otf_fund_nav",
                 conn,
             )
+            benchmark_expr = (
+                "benchmark"
+                if "benchmark" in catalog_columns
+                else "underlying_name AS benchmark"
+                if "underlying_name" in catalog_columns
+                else "'' AS benchmark"
+            )
             self._catalog_df = pd.read_sql_query(
                 "SELECT fund_code, share_class, fund_name, asset_class, "
-                "benchmark, inception_date, termination_date "
+                f"{benchmark_expr}, inception_date, termination_date "
                 "FROM otf_fund_catalog",
                 conn,
             )
@@ -443,6 +456,7 @@ class OTFBacktestEngine:
         start: str | None = None,
         end: str | None = None,
         rebalance_every: int = 5,
+        signal_dates: dict[pd.Timestamp, pd.Timestamp] | None = None,
     ) -> pd.DataFrame:
         """Run backtest given daily target weights.
 
@@ -456,6 +470,11 @@ class OTFBacktestEngine:
             Date range for backtest (defaults to full available range).
         rebalance_every : int
             Minimum trading days between rebalances.
+        signal_dates : dict[pd.Timestamp, pd.Timestamp], optional
+            Optional mapping from order submission dates to the earlier dates
+            when the source signal became observable.  This preserves the
+            listed-ETF close -> next OTC submission audit trail without
+            changing the fund confirmation rules.
 
         Returns
         -------
@@ -499,6 +518,8 @@ class OTFBacktestEngine:
         rows: list[dict[str, Any]] = []
         last_rebalance_idx: int | None = None
         prior_end_equity = float(self.initial_cash)
+        deferred_subscriptions: dict[str, float] = {}
+        deferred_signal_date: pd.Timestamp | None = None
 
         for date in test_dates:
             full_idx = self._date_to_index[date]
@@ -557,6 +578,43 @@ class OTFBacktestEngine:
             if current_equity <= 0:
                 raise RuntimeError("OTF_ACCOUNT_EQUITY_NON_POSITIVE")
 
+            # A fund switch cannot spend redemption proceeds before they
+            # arrive.  Complete the subscription leg of that same rebalance
+            # after settlement instead of leaving the cash idle until the
+            # next strategy signal.
+            if not pending_orders and deferred_subscriptions:
+                for fund_code in sorted(list(deferred_subscriptions)):
+                    remaining = deferred_subscriptions[fund_code]
+                    principal = min(
+                        remaining,
+                        available_cash / (1.0 + self.subscription_fee_rate),
+                    )
+                    if principal <= 1.0:
+                        continue
+                    order = self.submit_order(
+                        order_id=f"ord-{uuid.uuid4().hex[:8]}",
+                        side=OrderSide.SUBSCRIBE,
+                        fund_code=fund_code,
+                        signal_date=deferred_signal_date or date,
+                        submit_date=date,
+                        requested_amount=principal,
+                        available_cash=available_cash,
+                        current_positions=positions,
+                    )
+                    if order is None:
+                        continue
+                    available_cash -= order.cash_frozen
+                    frozen_cash += order.cash_frozen
+                    pending_orders.append(order)
+                    all_orders.append(order)
+                    remaining -= principal
+                    if remaining <= 1.0:
+                        deferred_subscriptions.pop(fund_code, None)
+                    else:
+                        deferred_subscriptions[fund_code] = remaining
+                if not deferred_subscriptions:
+                    deferred_signal_date = None
+
             should_rebalance = (
                 not pending_orders
                 and (
@@ -572,7 +630,13 @@ class OTFBacktestEngine:
                     for code, weight in weights_row.items()
                     if pd.notna(weight) and float(weight) > 1e-12
                 }
-                signal_date = date
+                signal_date = (
+                    signal_dates.get(date, date)
+                    if signal_dates is not None
+                    else date
+                )
+                deferred_subscriptions = {}
+                deferred_signal_date = signal_date
                 last_rebalance_idx = full_idx
                 target_amounts = {
                     code: weight * current_equity for code, weight in target.items()
@@ -600,7 +664,7 @@ class OTFBacktestEngine:
                         order_id=f"ord-{uuid.uuid4().hex[:8]}",
                         side=OrderSide.REDEEM,
                         fund_code=fund_code,
-                        signal_date=date,
+                        signal_date=signal_date,
                         submit_date=date,
                         requested_amount=redemption_amount,
                         available_cash=available_cash,
@@ -630,12 +694,13 @@ class OTFBacktestEngine:
                         available_cash / (1.0 + self.subscription_fee_rate),
                     )
                     if principal <= 1.0:
+                        deferred_subscriptions[fund_code] = diff
                         continue
                     order = self.submit_order(
                         order_id=f"ord-{uuid.uuid4().hex[:8]}",
                         side=OrderSide.SUBSCRIBE,
                         fund_code=fund_code,
-                        signal_date=date,
+                        signal_date=signal_date,
                         submit_date=date,
                         requested_amount=principal,
                         available_cash=available_cash,
@@ -646,6 +711,14 @@ class OTFBacktestEngine:
                         frozen_cash += order.cash_frozen
                         pending_orders.append(order)
                         all_orders.append(order)
+                        remaining = diff - principal
+                        if remaining > 1.0:
+                            deferred_subscriptions[fund_code] = remaining
+                    else:
+                        deferred_subscriptions[fund_code] = diff
+
+                if not deferred_subscriptions:
+                    deferred_signal_date = None
 
             end_equity = self._portfolio_value(
                 available_cash, frozen_cash, receivable_cash, positions, full_idx

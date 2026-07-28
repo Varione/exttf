@@ -619,6 +619,55 @@ class TestAccountingCorrectness:
         ]
         assert redemptions, "A fund removed from target weights must be redeemed"
 
+    def test_explicit_signal_date_is_preserved_on_orders(self, clean_engine):
+        submit_date = clean_engine._trading_dates[2]
+        source_signal_date = clean_engine._trading_dates[1]
+        targets = pd.DataFrame(
+            {"F001": [0.5]}, index=pd.DatetimeIndex([submit_date])
+        )
+
+        clean_engine.run_backtest(
+            targets,
+            str(submit_date.date()),
+            str(clean_engine._trading_dates[6].date()),
+            rebalance_every=1,
+            signal_dates={submit_date: source_signal_date},
+        )
+
+        assert clean_engine.last_orders
+        assert all(
+            order.signal_date == source_signal_date
+            for order in clean_engine.last_orders
+        )
+        assert all(order.submit_date == submit_date for order in clean_engine.last_orders)
+
+    def test_redemption_proceeds_complete_deferred_subscription(self, clean_engine):
+        dates = clean_engine._trading_dates[:12]
+        targets = pd.DataFrame(
+            0.0, index=pd.DatetimeIndex([dates[0], dates[5]]), columns=["F001", "F002"]
+        )
+        targets.loc[dates[0], "F001"] = 1.0
+        targets.loc[dates[5], "F002"] = 1.0
+
+        clean_engine.run_backtest(
+            targets, str(dates[0].date()), str(dates[-1].date()), rebalance_every=1
+        )
+
+        old_fund_redemptions = [
+            order
+            for order in clean_engine.last_orders
+            if order.side == OrderSide.REDEEM and order.fund_code == "F001"
+        ]
+        new_fund_subscriptions = [
+            order
+            for order in clean_engine.last_orders
+            if order.side == OrderSide.SUBSCRIBE and order.fund_code == "F002"
+        ]
+        assert old_fund_redemptions
+        assert new_fund_subscriptions
+        assert new_fund_subscriptions[-1].submit_date > dates[5]
+        assert new_fund_subscriptions[-1].signal_date == dates[5]
+
 
 class TestProductionData:
     """Tests against production OTF database."""
