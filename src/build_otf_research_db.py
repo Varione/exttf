@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import os
@@ -15,6 +16,7 @@ from pathlib import Path
 MAPPED_DB = Path("data/processed/otf_mapped.sqlite")
 DEFENSIVE_DB = Path("data/processed/otf.sqlite")
 OUTPUT_DB = Path("data/processed/otf_research.sqlite")
+EXTENDED_DB = Path("data/processed/otf_extended_assets.sqlite")
 DEFAULT_DEFENSIVE_CODES = ("006663",)
 
 
@@ -31,6 +33,7 @@ def build_research_db(
     defensive_db: Path = DEFENSIVE_DB,
     output_db: Path = OUTPUT_DB,
     defensive_codes: tuple[str, ...] = DEFAULT_DEFENSIVE_CODES,
+    extended_db: Path | None = None,
 ) -> dict:
     """Copy mapped data and append explicitly approved direct OTC funds."""
     for source in (mapped_db, defensive_db):
@@ -110,23 +113,78 @@ def build_research_db(
                         "last_nav": nav_rows[-1][1],
                     }
                 )
+            if extended_db is not None:
+                if not extended_db.exists():
+                    raise FileNotFoundError(extended_db)
+                with sqlite3.connect(extended_db) as extended:
+                    extended_catalog = extended.execute(
+                        """
+                        SELECT fund_code,fund_name,fund_family,share_class,
+                               fund_type,etf_symbol,etf_name,underlying_name,
+                               asset_class,mapping_score,mapping_confidence,
+                               mapping_method,inception_date,termination_date,
+                               source,fetched_at
+                        FROM otf_fund_catalog
+                        """
+                    ).fetchall()
+                    extended_nav = extended.execute(
+                        """
+                        SELECT fund_code,nav_date,unit_nav,cumulative_nav,
+                               daily_growth_pct,cumulative_nav_imputed,
+                               distribution_per_share,share_adjustment_factor,
+                               total_return_factor FROM otf_fund_nav
+                        """
+                    ).fetchall()
+                extended_codes = {row[0] for row in extended_catalog}
+                extended_nav_counts = Counter(row[0] for row in extended_nav)
+                target.executemany(
+                    """
+                    INSERT OR REPLACE INTO otf_fund_catalog (
+                        fund_code,fund_name,fund_family,share_class,fund_type,
+                        etf_symbol,etf_name,underlying_name,asset_class,
+                        mapping_score,mapping_confidence,mapping_method,
+                        inception_date,termination_date,source,fetched_at
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    extended_catalog,
+                )
+                target.executemany(
+                    "DELETE FROM otf_fund_nav WHERE fund_code=?",
+                    [(code,) for code in extended_codes],
+                )
+                target.executemany(
+                    "INSERT INTO otf_fund_nav VALUES (?,?,?,?,?,?,?,?,?)",
+                    extended_nav,
+                )
+                inserted.extend(
+                    {
+                        "fund_code": row[0],
+                        "fund_name": row[1],
+                        "research_asset_class": row[8],
+                        "nav_rows": extended_nav_counts[row[0]],
+                        "source": "extended_otf_assets",
+                    }
+                    for row in extended_catalog
+                )
+            target.execute("DROP TABLE IF EXISTS research_db_manifest")
             target.execute(
                 """
-                CREATE TABLE IF NOT EXISTS research_db_manifest (
+                CREATE TABLE research_db_manifest (
                     generated_at TEXT, mapped_db_sha256 TEXT,
                     defensive_db_sha256 TEXT, defensive_codes TEXT,
-                    source_independent INTEGER, pit_status TEXT
+                    extended_db_sha256 TEXT, source_independent INTEGER,
+                    pit_status TEXT
                 )
                 """
             )
-            target.execute("DELETE FROM research_db_manifest")
             target.execute(
-                "INSERT INTO research_db_manifest VALUES (?,?,?,?,?,?)",
+                "INSERT INTO research_db_manifest VALUES (?,?,?,?,?,?,?)",
                 (
                     datetime.now().astimezone().isoformat(),
                     _sha256(mapped_db),
                     _sha256(defensive_db),
                     ";".join(defensive_codes),
+                    _sha256(extended_db) if extended_db is not None else "",
                     0,
                     "PIT_PARTIAL",
                 ),
@@ -160,6 +218,7 @@ def build_research_db(
         "defensive_funds": inserted,
         "pit_status": "PIT_PARTIAL",
         "source_independent": False,
+        "extended_db": str(extended_db) if extended_db is not None else None,
     }
 
 
@@ -171,12 +230,14 @@ def main() -> None:
     parser.add_argument(
         "--defensive-codes", default=",".join(DEFAULT_DEFENSIVE_CODES)
     )
+    parser.add_argument("--extended-db", type=Path, default=EXTENDED_DB)
     args = parser.parse_args()
     codes = tuple(code.strip() for code in args.defensive_codes.split(",") if code.strip())
     print(
         json.dumps(
             build_research_db(
-                args.mapped_db, args.defensive_db, args.output_db, codes
+                args.mapped_db, args.defensive_db, args.output_db, codes,
+                args.extended_db,
             ),
             ensure_ascii=False,
             indent=2,

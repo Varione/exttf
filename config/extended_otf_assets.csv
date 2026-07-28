@@ -1,0 +1,11 @@
+fund_code,fund_name,asset_class,data_model,approved_for_strategy,selection_basis
+260102,景顺货币A,money,money_yield,1,oldest currently purchasable zero-front-fee A-share money representative
+040003,华安现金富利货币A,money,money_yield,1,pre-specified old money-fund robustness representative
+217004,招商现金增值货币A,money,money_yield,1,pre-specified old money-fund robustness representative
+050003,博时现金收益货币A,money,money_yield,1,pre-specified old money-fund robustness representative
+202301,南方现金增利货币A,money,money_yield,1,pre-specified old money-fund robustness representative
+006663,易方达安悦超短债C,bond_short,unit_nav,1,verified defensive short-bond sleeve
+001512,易方达中债3-5年期国债指数,bond_government_3_5,unit_nav,1,passive sovereign-duration sleeve
+005839,创金合信中债1-3年政金债C,bond_policy_1_3,unit_nav,1,passive policy-bank sleeve
+000148,易方达高等级信用债债券C,bond_credit,unit_nav,1,high-grade credit sleeve
+014430,南方中证同业存单AAA指数7天持有,interbank_cd,unit_nav,0,seven-day minimum holding requires dedicated execution rule

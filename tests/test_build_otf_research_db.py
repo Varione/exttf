@@ -17,6 +17,7 @@ from build_otf_research_db import build_research_db
 ROOT = Path(__file__).resolve().parents[1]
 MAPPED = ROOT / "data" / "processed" / "otf_mapped.sqlite"
 DEFENSIVE = ROOT / "data" / "processed" / "otf.sqlite"
+EXTENDED = ROOT / "data" / "processed" / "otf_extended_assets.sqlite"
 
 
 @pytest.mark.skipif(
@@ -60,3 +61,24 @@ def test_missing_source_database_is_rejected(tmp_path):
             tmp_path / "also_missing.sqlite",
             tmp_path / "output.sqlite",
         )
+
+
+@pytest.mark.skipif(
+    not MAPPED.exists() or not DEFENSIVE.exists() or not EXTENDED.exists(),
+    reason="production extended OTC data absent",
+)
+def test_build_research_db_merges_extended_asset_classes(tmp_path):
+    output = tmp_path / "research.sqlite"
+    result = build_research_db(
+        MAPPED, DEFENSIVE, output, (), extended_db=EXTENDED
+    )
+    with sqlite3.connect(output) as connection:
+        classes = dict(
+            connection.execute(
+                "SELECT fund_code,asset_class FROM otf_fund_catalog "
+                "WHERE mapping_method='approved_direct_otf_extended_v1'"
+            ).fetchall()
+        )
+    assert classes["260102"] == "money"
+    assert classes["001512"] == "bond_government_3_5"
+    assert result["extended_db"] == str(EXTENDED)
