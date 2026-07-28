@@ -27,6 +27,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from otf_trading_rules import ProductRuleBook
+
 
 class OrderSide(str, Enum):
     SUBSCRIBE = "subscribe"
@@ -38,6 +40,23 @@ class OrderStatus(str, Enum):
     CONFIRMED = "confirmed"
     SETTLED = "settled"
     CANCELLED = "cancelled"
+
+
+@dataclass
+class PositionLot:
+    lot_id: str
+    acquired_date: pd.Timestamp
+    shares: float
+    reserved_shares: float = 0.0
+
+
+@dataclass
+class LotAllocation:
+    lot_id: str
+    acquired_date: pd.Timestamp
+    shares_at_submit: float
+    shares_confirmed: float = 0.0
+    fee_rate: float = 0.0
 
 
 @dataclass
@@ -59,6 +78,8 @@ class OTFOrder:
     redemption_arrival_date: pd.Timestamp | None = None
     cash_released: float = 0.0
     status: OrderStatus = OrderStatus.PENDING
+    lot_allocations: list[LotAllocation] = field(default_factory=list)
+    effective_fee_rate: float = 0.0
 
 
 class OTFBacktestEngine:
@@ -106,6 +127,8 @@ class OTFBacktestEngine:
         minimum_trade_ratio: float = 0.0,
         fund_subscription_fee_rates: dict[str, float] | None = None,
         fund_redemption_fee_rates: dict[str, float] | None = None,
+        product_rule_book: ProductRuleBook | None = None,
+        strict_product_rules: bool = False,
     ):
         self.db_path = db_path
         self.confirmation_days_subscribe = confirmation_days_subscribe
@@ -135,6 +158,9 @@ class OTFBacktestEngine:
         ):
             raise ValueError("fund fee rates cannot be negative")
         self.reinvest_distributions = bool(reinvest_distributions)
+        self.product_rule_book = product_rule_book
+        self.strict_product_rules = bool(strict_product_rules)
+        self._rejection_log: list[dict[str, Any]] = []
         if not self.reinvest_distributions:
             raise ValueError(
                 "Only total-return reinvestment mode is currently supported"
@@ -315,6 +341,11 @@ class OTFBacktestEngine:
         available_funds = set(self._nav_df["fund_code"].unique())
         catalog_funds = set(self._catalog_df["fund_code"].unique())
         self.available_fund_codes = sorted(available_funds & catalog_funds)
+        self.data_quality["product_rule_coverage"] = (
+            self.product_rule_book.coverage(self.available_fund_codes)
+            if self.product_rule_book is not None
+            else None
+        )
 
         print(
             f"Loaded OTF data: {len(self.available_fund_codes)} funds, "
@@ -343,14 +374,51 @@ class OTFBacktestEngine:
         return self._fund_qdii_map.get(fund_code, False)
 
     def get_subscription_fee_rate(self, fund_code: str) -> float:
-        return self.fund_subscription_fee_rates.get(
-            fund_code, self.subscription_fee_rate
+        if fund_code in self.fund_subscription_fee_rates:
+            return self.fund_subscription_fee_rates[fund_code]
+        rule = (
+            self.product_rule_book.rule_for(fund_code)
+            if self.product_rule_book is not None else None
         )
+        return rule.subscription_fee_rate if rule else self.subscription_fee_rate
 
-    def get_redemption_fee_rate(self, fund_code: str) -> float:
-        return self.fund_redemption_fee_rates.get(
-            fund_code, self.redemption_fee_rate
-        )
+    def get_subscription_fee_amount(self, fund_code: str, amount: float) -> float:
+        if fund_code in self.fund_subscription_fee_rates:
+            return amount * self.fund_subscription_fee_rates[fund_code]
+        if self.product_rule_book is not None:
+            return self.product_rule_book.subscription_fee_amount(
+                fund_code, amount, self.subscription_fee_rate
+            )
+        return amount * self.subscription_fee_rate
+
+    def maximum_affordable_subscription(
+        self, fund_code: str, desired_amount: float, available_cash: float
+    ) -> float:
+        desired = max(0.0, min(float(desired_amount), float(available_cash)))
+        if desired + self.get_subscription_fee_amount(fund_code, desired) <= available_cash:
+            return desired
+        low, high = 0.0, desired
+        for _ in range(60):
+            midpoint = (low + high) / 2.0
+            if (
+                midpoint + self.get_subscription_fee_amount(fund_code, midpoint)
+                <= available_cash
+            ):
+                low = midpoint
+            else:
+                high = midpoint
+        return low
+
+    def get_redemption_fee_rate(
+        self, fund_code: str, holding_days: int | None = None
+    ) -> float:
+        if fund_code in self.fund_redemption_fee_rates:
+            return self.fund_redemption_fee_rates[fund_code]
+        if self.product_rule_book is not None and holding_days is not None:
+            return self.product_rule_book.fee_rate(
+                fund_code, holding_days, self.redemption_fee_rate
+            )
+        return self.redemption_fee_rate
 
     def get_confirmation_days(
         self, fund_code: str, side: OrderSide
@@ -360,12 +428,88 @@ class OTFBacktestEngine:
         QDII funds use longer confirmation periods by default.
         """
         is_qdii = self.is_qdii(fund_code)
+        rule = (
+            self.product_rule_book.rule_for(fund_code)
+            if self.product_rule_book is not None else None
+        )
+        if rule is not None:
+            return (
+                rule.subscription_confirmation_days
+                if side == OrderSide.SUBSCRIBE
+                else rule.redemption_confirmation_days
+            )
         if side == OrderSide.SUBSCRIBE:
             base = self.confirmation_days_subscribe
             return base + 2 if is_qdii else base
-        else:
-            base = self.confirmation_days_redeem
-            return base + 2 if is_qdii else base
+        base = self.confirmation_days_redeem
+        return base + 2 if is_qdii else base
+
+    def get_redemption_settlement_days(self, fund_code: str) -> int:
+        rule = (
+            self.product_rule_book.rule_for(fund_code)
+            if self.product_rule_book is not None else None
+        )
+        return rule.redemption_settlement_days if rule else self.settlement_days_redeem
+
+    def get_minimum_holding_days(self, fund_code: str) -> int:
+        rule = (
+            self.product_rule_book.rule_for(fund_code)
+            if self.product_rule_book is not None else None
+        )
+        return rule.minimum_holding_calendar_days if rule else 0
+
+    def get_order_constraints(
+        self, fund_code: str, submit_date: pd.Timestamp
+    ) -> tuple[bool, bool, float | None, str]:
+        if self.product_rule_book is None:
+            return True, True, None, ""
+        return self.product_rule_book.order_constraints(fund_code, submit_date)
+
+    def _record_rejection(
+        self, fund_code: str, side: OrderSide, date: pd.Timestamp, reason: str
+    ) -> None:
+        self._rejection_log.append(
+            {
+                "fund_code": fund_code,
+                "side": side.value,
+                "date": pd.Timestamp(date),
+                "reason": reason,
+            }
+        )
+
+    def _allocate_redemption_lots(
+        self,
+        fund_code: str,
+        shares_required: float,
+        submit_date: pd.Timestamp,
+        position_lots: dict[str, list[PositionLot]],
+    ) -> list[LotAllocation] | None:
+        minimum_days = self.get_minimum_holding_days(fund_code)
+        remaining = shares_required
+        allocations: list[LotAllocation] = []
+        for lot in sorted(
+            position_lots.get(fund_code, []), key=lambda item: item.acquired_date
+        ):
+            holding_days = (pd.Timestamp(submit_date) - lot.acquired_date).days
+            if holding_days < minimum_days:
+                continue
+            available = max(0.0, lot.shares - lot.reserved_shares)
+            take = min(available, remaining)
+            if take > 1e-12:
+                allocations.append(
+                    LotAllocation(lot.lot_id, lot.acquired_date, take)
+                )
+                remaining -= take
+            if remaining <= 1e-10:
+                break
+        if remaining > 1e-8:
+            return None
+        lots_by_id = {
+            lot.lot_id: lot for lot in position_lots.get(fund_code, [])
+        }
+        for allocation in allocations:
+            lots_by_id[allocation.lot_id].reserved_shares += allocation.shares_at_submit
+        return allocations
 
     def submit_order(
         self,
@@ -377,6 +521,7 @@ class OTFBacktestEngine:
         requested_amount: float,
         available_cash: float,
         current_positions: dict[str, float],
+        position_lots: dict[str, list[PositionLot]] | None = None,
     ) -> OTFOrder | None:
         """Submit a new subscription or redemption order.
 
@@ -386,9 +531,41 @@ class OTFBacktestEngine:
         submit_idx = self._date_to_index.get(submit_date)
         if submit_idx is None:
             return None
+        if (
+            self.strict_product_rules
+            and (
+                self.product_rule_book is None
+                or self.product_rule_book.rule_for(fund_code) is None
+            )
+        ):
+            raise RuntimeError(f"MISSING_PRODUCT_RULE:{fund_code}")
 
         nav_at_submit = self.get_nav(fund_code, submit_idx)
         if nav_at_submit is None or nav_at_submit <= 0:
+            return None
+        sub_open, red_open, subscription_limit, restriction_reason = (
+            self.get_order_constraints(fund_code, submit_date)
+        )
+        if side == OrderSide.SUBSCRIBE and not sub_open:
+            self._record_rejection(
+                fund_code, side, submit_date,
+                restriction_reason or "SUBSCRIPTION_CLOSED",
+            )
+            return None
+        if side == OrderSide.REDEEM and not red_open:
+            self._record_rejection(
+                fund_code, side, submit_date,
+                restriction_reason or "REDEMPTION_CLOSED",
+            )
+            return None
+        if (
+            side == OrderSide.SUBSCRIBE
+            and subscription_limit is not None
+            and requested_amount > subscription_limit + 1e-10
+        ):
+            self._record_rejection(
+                fund_code, side, submit_date, "SUBSCRIPTION_LIMIT_EXCEEDED"
+            )
             return None
 
         order = OTFOrder(
@@ -402,7 +579,7 @@ class OTFBacktestEngine:
         )
 
         if side == OrderSide.SUBSCRIBE:
-            fee = requested_amount * self.get_subscription_fee_rate(fund_code)
+            fee = self.get_subscription_fee_amount(fund_code, requested_amount)
             total_cost = requested_amount + fee
             if total_cost > available_cash + 1e-10:
                 return None
@@ -413,6 +590,17 @@ class OTFBacktestEngine:
             current_shares = current_positions.get(fund_code, 0.0)
             if shares_to_redeem > current_shares + 1e-10:
                 return None
+            if position_lots is not None:
+                allocations = self._allocate_redemption_lots(
+                    fund_code, shares_to_redeem, submit_date, position_lots
+                )
+                if allocations is None:
+                    self._record_rejection(
+                        fund_code, side, submit_date,
+                        "INSUFFICIENT_MATURE_UNRESERVED_LOTS",
+                    )
+                    return None
+                order.lot_allocations = allocations
 
         return order
 
@@ -448,20 +636,41 @@ class OTFBacktestEngine:
             # the subscription fee twice.
             order.shares_confirmed = order.requested_amount / confirm_nav
         else:
-            shares_to_redeem = order.requested_amount / (
-                order.nav_at_submit or confirm_nav
-            )
-            for idx in range(submit_idx + 1, confirm_idx + 1):
-                shares_to_redeem *= self.get_share_adjustment(
-                    order.fund_code, idx
+            if order.lot_allocations:
+                fee = 0.0
+                shares_to_redeem = 0.0
+                for allocation in order.lot_allocations:
+                    adjusted_shares = allocation.shares_at_submit
+                    for idx in range(submit_idx + 1, confirm_idx + 1):
+                        adjusted_shares *= self.get_share_adjustment(
+                            order.fund_code, idx
+                        )
+                    holding_days = (
+                        self._trading_dates[confirm_idx] - allocation.acquired_date
+                    ).days
+                    allocation.shares_confirmed = adjusted_shares
+                    allocation.fee_rate = self.get_redemption_fee_rate(
+                        order.fund_code, holding_days
+                    )
+                    shares_to_redeem += adjusted_shares
+                    fee += adjusted_shares * confirm_nav * allocation.fee_rate
+            else:
+                shares_to_redeem = order.requested_amount / (
+                    order.nav_at_submit or confirm_nav
+                )
+                for idx in range(submit_idx + 1, confirm_idx + 1):
+                    shares_to_redeem *= self.get_share_adjustment(
+                        order.fund_code, idx
+                    )
+                fee = (
+                    shares_to_redeem
+                    * confirm_nav
+                    * self.get_redemption_fee_rate(order.fund_code)
                 )
             order.shares_confirmed = shares_to_redeem
-            fee = (
-                shares_to_redeem
-                * confirm_nav
-                * self.get_redemption_fee_rate(order.fund_code)
-            )
             order.fee_paid = fee
+            gross_proceeds = shares_to_redeem * confirm_nav
+            order.effective_fee_rate = fee / gross_proceeds if gross_proceeds else 0.0
             order.cash_released = shares_to_redeem * confirm_nav - fee
 
         order.status = OrderStatus.CONFIRMED
@@ -551,6 +760,7 @@ class OTFBacktestEngine:
         frozen_cash = 0.0
         receivable_cash = 0.0
         positions: dict[str, float] = {}
+        position_lots: dict[str, list[PositionLot]] = {}
         reserved_redemptions: dict[str, float] = {}
         pending_orders: list[OTFOrder] = []
         all_orders: list[OTFOrder] = []
@@ -559,6 +769,7 @@ class OTFBacktestEngine:
         prior_end_equity = float(self.initial_cash)
         deferred_subscriptions: dict[str, float] = {}
         deferred_signal_date: pd.Timestamp | None = None
+        self._rejection_log = []
 
         for date in test_dates:
             full_idx = self._date_to_index[date]
@@ -571,6 +782,9 @@ class OTFBacktestEngine:
             for fund_code in list(positions):
                 adjustment = self.get_share_adjustment(fund_code, full_idx)
                 positions[fund_code] *= adjustment
+                for lot in position_lots.get(fund_code, []):
+                    lot.shares *= adjustment
+                    lot.reserved_shares *= adjustment
                 if fund_code in reserved_redemptions:
                     reserved_redemptions[fund_code] *= adjustment
             available_cash *= 1.0 + self.cash_daily_return
@@ -587,10 +801,34 @@ class OTFBacktestEngine:
                             positions.get(order.fund_code, 0.0)
                             + (order.shares_confirmed or 0.0)
                         )
+                        position_lots.setdefault(order.fund_code, []).append(
+                            PositionLot(
+                                lot_id=f"lot-{uuid.uuid4().hex[:10]}",
+                                acquired_date=order.confirmation_date,
+                                shares=order.shares_confirmed or 0.0,
+                            )
+                        )
                         self.settle_order(order, full_idx)
                         pending_orders.remove(order)
                     else:
                         shares = order.shares_confirmed or 0.0
+                        if order.lot_allocations:
+                            lots_by_id = {
+                                lot.lot_id: lot
+                                for lot in position_lots.get(order.fund_code, [])
+                            }
+                            for allocation in order.lot_allocations:
+                                lot = lots_by_id[allocation.lot_id]
+                                lot.shares -= allocation.shares_confirmed
+                                lot.reserved_shares = max(
+                                    0.0,
+                                    lot.reserved_shares
+                                    - allocation.shares_confirmed,
+                                )
+                            position_lots[order.fund_code] = [
+                                lot for lot in position_lots[order.fund_code]
+                                if lot.shares > 1e-12
+                            ]
                         positions[order.fund_code] = (
                             positions.get(order.fund_code, 0.0) - shares
                         )
@@ -601,11 +839,14 @@ class OTFBacktestEngine:
                         )
                         if positions[order.fund_code] < 1e-12:
                             positions.pop(order.fund_code, None)
+                            position_lots.pop(order.fund_code, None)
                         receivable_cash += order.cash_released
 
                 if order.status == OrderStatus.CONFIRMED:
                     confirm_idx = self._date_to_index[order.confirmation_date]
-                    if full_idx - confirm_idx >= self.settlement_days_redeem:
+                    if full_idx - confirm_idx >= self.get_redemption_settlement_days(
+                        order.fund_code
+                    ):
                         cash_flow = self.settle_order(order, full_idx)
                         receivable_cash -= order.cash_released
                         available_cash += cash_flow
@@ -630,11 +871,14 @@ class OTFBacktestEngine:
                     if remaining <= minimum_trade_amount:
                         deferred_subscriptions.pop(fund_code, None)
                         continue
-                    principal = min(
-                        remaining,
-                        available_cash
-                        / (1.0 + self.get_subscription_fee_rate(fund_code)),
+                    principal = self.maximum_affordable_subscription(
+                        fund_code, remaining, available_cash
                     )
+                    _, _, subscription_limit, _ = self.get_order_constraints(
+                        fund_code, date
+                    )
+                    if subscription_limit is not None:
+                        principal = min(principal, subscription_limit)
                     if principal <= minimum_trade_amount:
                         continue
                     order = self.submit_order(
@@ -646,6 +890,7 @@ class OTFBacktestEngine:
                         requested_amount=principal,
                         available_cash=available_cash,
                         current_positions=positions,
+                        position_lots=position_lots,
                     )
                     if order is None:
                         continue
@@ -715,6 +960,7 @@ class OTFBacktestEngine:
                         requested_amount=redemption_amount,
                         available_cash=available_cash,
                         current_positions={fund_code: available_shares},
+                        position_lots=position_lots,
                     )
                     if order is not None:
                         shares_reserved = redemption_amount / exact_nav
@@ -735,11 +981,14 @@ class OTFBacktestEngine:
                     diff = target_amounts[fund_code] - current_amount
                     if diff <= minimum_trade_amount:
                         continue
-                    principal = min(
-                        diff,
-                        available_cash
-                        / (1.0 + self.get_subscription_fee_rate(fund_code)),
+                    principal = self.maximum_affordable_subscription(
+                        fund_code, diff, available_cash
                     )
+                    _, _, subscription_limit, _ = self.get_order_constraints(
+                        fund_code, date
+                    )
+                    if subscription_limit is not None:
+                        principal = min(principal, subscription_limit)
                     if principal <= minimum_trade_amount:
                         deferred_subscriptions[fund_code] = diff
                         continue
@@ -752,6 +1001,7 @@ class OTFBacktestEngine:
                         requested_amount=principal,
                         available_cash=available_cash,
                         current_positions=positions,
+                        position_lots=position_lots,
                     )
                     if order is not None:
                         available_cash -= order.cash_frozen
@@ -792,6 +1042,8 @@ class OTFBacktestEngine:
 
         result = pd.DataFrame(rows)
         self.last_orders = all_orders
+        self.last_rejections = pd.DataFrame(self._rejection_log)
+        self.last_position_lots = position_lots
         n_orders = len(all_orders)
         n_sub = sum(1 for o in all_orders if o.side == OrderSide.SUBSCRIBE)
         n_red = sum(1 for o in all_orders if o.side == OrderSide.REDEEM)
@@ -800,6 +1052,37 @@ class OTFBacktestEngine:
             f"({n_sub} subscribe, {n_red} redeem)"
         )
         return result
+
+    def order_audit_frame(self) -> pd.DataFrame:
+        rows: list[dict[str, Any]] = []
+        for order in getattr(self, "last_orders", []):
+            holding_days = [
+                (order.confirmation_date - allocation.acquired_date).days
+                for allocation in order.lot_allocations
+                if order.confirmation_date is not None
+            ]
+            rows.append(
+                {
+                    "order_id": order.order_id,
+                    "fund_code": order.fund_code,
+                    "side": order.side.value,
+                    "status": order.status.value,
+                    "signal_date": order.signal_date,
+                    "submit_date": order.submit_date,
+                    "confirmation_date": order.confirmation_date,
+                    "redemption_arrival_date": order.redemption_arrival_date,
+                    "requested_amount": order.requested_amount,
+                    "cash_frozen": order.cash_frozen,
+                    "confirmed_nav": order.confirmed_nav,
+                    "shares_confirmed": order.shares_confirmed,
+                    "fee_paid": order.fee_paid,
+                    "effective_fee_rate": order.effective_fee_rate,
+                    "fifo_lot_count": len(order.lot_allocations),
+                    "minimum_holding_days": min(holding_days) if holding_days else None,
+                    "maximum_holding_days": max(holding_days) if holding_days else None,
+                }
+            )
+        return pd.DataFrame(rows)
 
     def _portfolio_value(
         self,

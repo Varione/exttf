@@ -10,6 +10,7 @@ import pandas as pd
 
 from mapped_otf_strategy import MappedETFSignalBuilder, OTF_RESEARCH_DB
 from otf_backtest_engine import OTFBacktestEngine
+from otf_trading_rules import ProductRuleBook
 from strategy_validation import evaluate_stability, rolling_windows
 
 
@@ -97,8 +98,21 @@ def add_defensive_residual(
     return targets.reindex(columns=sorted(targets.columns), fill_value=0.0), pd.DataFrame(audits)
 
 
-def make_engine(db_path: str = OTF_RESEARCH_DB, cost_multiplier: float = 1.0) -> OTFBacktestEngine:
-    zero = {code: rate * cost_multiplier for code, rate in ZERO_FEE_RESEARCH_ASSUMPTION.items()}
+def make_engine(
+    db_path: str = OTF_RESEARCH_DB,
+    cost_multiplier: float = 1.0,
+    realistic_rules: bool = True,
+    subscription_discount: float = 1.0,
+) -> OTFBacktestEngine:
+    zero = {
+        code: rate * cost_multiplier
+        for code, rate in ZERO_FEE_RESEARCH_ASSUMPTION.items()
+    }
+    rule_book = None
+    if realistic_rules:
+        rule_book = ProductRuleBook.from_csv().with_subscription_discount(
+            subscription_discount
+        ).scaled_fees(cost_multiplier)
     return OTFBacktestEngine(
         db_path,
         confirmation_days_subscribe=1,
@@ -107,8 +121,10 @@ def make_engine(db_path: str = OTF_RESEARCH_DB, cost_multiplier: float = 1.0) ->
         subscription_fee_rate=0.001 * cost_multiplier,
         redemption_fee_rate=0.0015 * cost_multiplier,
         minimum_trade_ratio=0.005,
-        fund_subscription_fee_rates=zero,
-        fund_redemption_fee_rates=zero,
+        fund_subscription_fee_rates=None if realistic_rules else zero,
+        fund_redemption_fee_rates=None if realistic_rules else zero,
+        product_rule_book=rule_book,
+        strict_product_rules=realistic_rules,
     )
 
 
@@ -135,6 +151,9 @@ def run(db_path: str = OTF_RESEARCH_DB) -> pd.DataFrame:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     rows: list[dict] = []
     stability_payload: list[dict] = []
+    rejection_rows: list[pd.DataFrame] = []
+    order_rows: list[pd.DataFrame] = []
+    traded_rule_coverage: dict[str, object] = {}
     for name, targets in variants.items():
         daily = engine.run_backtest(
             targets,
@@ -150,6 +169,54 @@ def run(db_path: str = OTF_RESEARCH_DB) -> pd.DataFrame:
         stability_payload.append({"variant": name, **stability})
         daily.to_csv(OUTPUT / f"daily_{name}.csv", index=False)
         windows.to_csv(OUTPUT / f"rolling_{name}.csv", index=False)
+        if not engine.last_rejections.empty:
+            rejected = engine.last_rejections.copy()
+            rejected.insert(0, "variant", name)
+            rejection_rows.append(rejected)
+        orders = engine.order_audit_frame()
+        if not orders.empty:
+            orders.insert(0, "variant", name)
+            order_rows.append(orders)
+        if name == "Core_Diversified_Defensive":
+            traded_rule_coverage = engine.product_rule_book.coverage(
+                orders["fund_code"].astype(str).unique().tolist()
+            )
+
+    legacy_engine = make_engine(db_path, realistic_rules=False)
+    legacy_daily = legacy_engine.run_backtest(
+        diversified,
+        start=START,
+        end=END,
+        rebalance_every=1,
+        signal_dates=signal_dates,
+    )
+    legacy_metrics = legacy_engine.calculate_metrics(legacy_daily)
+    rows.append(
+        {"variant": "Core_Diversified_Defensive_LegacyRules", **legacy_metrics}
+    )
+    legacy_daily.to_csv(
+        OUTPUT / "daily_Core_Diversified_Defensive_LegacyRules.csv", index=False
+    )
+
+    discounted_engine = make_engine(db_path, subscription_discount=0.1)
+    discounted_daily = discounted_engine.run_backtest(
+        diversified,
+        start=START,
+        end=END,
+        rebalance_every=1,
+        signal_dates=signal_dates,
+    )
+    discounted_metrics = discounted_engine.calculate_metrics(discounted_daily)
+    rows.append(
+        {
+            "variant": "Core_Diversified_Defensive_10pctSubscriptionFee",
+            **discounted_metrics,
+        }
+    )
+    discounted_daily.to_csv(
+        OUTPUT / "daily_Core_Diversified_Defensive_10pctSubscriptionFee.csv",
+        index=False,
+    )
 
     # One transparent fee stress: double all non-zero assumed transaction fees.
     stress_engine = make_engine(db_path, cost_multiplier=2.0)
@@ -168,6 +235,14 @@ def run(db_path: str = OTF_RESEARCH_DB) -> pd.DataFrame:
     summary.to_csv(OUTPUT / "summary.csv", index=False)
     core_audit.to_csv(OUTPUT / "core_signal_audit.csv", index=False)
     defensive_audit.to_csv(OUTPUT / "defensive_allocation_audit.csv", index=False)
+    pd.concat(order_rows, ignore_index=True).to_csv(
+        OUTPUT / "order_audit.csv", index=False
+    )
+    pd.concat(rejection_rows, ignore_index=True).to_csv(
+        OUTPUT / "order_rejections.csv", index=False
+    ) if rejection_rows else pd.DataFrame(
+        columns=["variant", "fund_code", "side", "date", "reason"]
+    ).to_csv(OUTPUT / "order_rejections.csv", index=False)
     (OUTPUT / "validation.json").write_text(
         json.dumps(
             {
@@ -176,8 +251,22 @@ def run(db_path: str = OTF_RESEARCH_DB) -> pd.DataFrame:
                 "strategy_pool": "438 mapped ETF feeders plus direct OTC defensive sleeves",
                 "money_fund_duplicates_used_for_strategy": False,
                 "interbank_cd_enabled": False,
-                "interbank_cd_exclusion_reason": "seven-day holding rule not modeled",
-                "fee_assumptions_are_product_verified": False,
+                "interbank_cd_exclusion_reason": (
+                    "holding rule modeled; product rules still awaiting official verification"
+                ),
+                "realistic_execution_features": [
+                    "product confirmation and settlement delays",
+                    "FIFO subscription lots",
+                    "holding-period redemption fee tiers",
+                    "minimum holding periods",
+                    "subscription suspension and per-order limits",
+                    "frozen cash and redemption receivables",
+                ],
+                "product_rule_coverage": engine.data_quality[
+                    "product_rule_coverage"
+                ],
+                "traded_fund_rule_coverage": traded_rule_coverage,
+                "all_rules_officially_verified": False,
                 "stability": stability_payload,
             },
             ensure_ascii=False,

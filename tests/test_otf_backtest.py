@@ -24,11 +24,18 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from otf_backtest_engine import (
+    PositionLot,
     OTFBacktestEngine,
     OTFOrder,
     OTFStrategySignal,
     OrderSide,
     OrderStatus,
+)
+from otf_trading_rules import (
+    FundTradingRule,
+    ProductRuleBook,
+    RedemptionFeeTier,
+    TradingRestrictionEvent,
 )
 
 TEST_DB = str(Path(__file__).resolve().parents[1] / "data" / "processed" / "otf.sqlite")
@@ -702,6 +709,111 @@ class TestAccountingCorrectness:
         assert engine.get_redemption_fee_rate("F001") == 0.0
         assert engine.get_subscription_fee_rate("F002") == 0.01
         assert engine.get_redemption_fee_rate("F002") == 0.02
+
+
+class TestProductLevelExecution:
+    def test_fifo_lots_apply_holding_period_fee_tiers(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 3)},
+            fee_tiers={
+                code: [
+                    RedemptionFeeTier(0, 7, 0.015),
+                    RedemptionFeeTier(7, None, 0.0),
+                ]
+            },
+        )
+        submit_idx = 10
+        submit_date = engine._trading_dates[submit_idx]
+        nav = engine.get_nav(code, submit_idx)
+        lots = {
+            code: [
+                PositionLot("old", submit_date - pd.Timedelta(days=10), 100.0),
+                PositionLot("young", submit_date - pd.Timedelta(days=3), 100.0),
+            ]
+        }
+        order = engine.submit_order(
+            "fifo", OrderSide.REDEEM, code, submit_date, submit_date,
+            150.0 * nav, 0.0, {code: 200.0}, position_lots=lots,
+        )
+        assert order is not None
+        assert [item.lot_id for item in order.lot_allocations] == ["old", "young"]
+        engine.confirm_order(order, submit_idx + 1)
+        expected = 50.0 * engine.get_nav(code, submit_idx + 1) * 0.015
+        assert order.fee_paid == pytest.approx(expected)
+
+    def test_minimum_holding_period_blocks_immature_redemption(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        engine.product_rule_book = ProductRuleBook(
+            rules={
+                code: FundTradingRule(
+                    code, 0.0, 1, 1, 3,
+                    minimum_holding_calendar_days=7,
+                )
+            }
+        )
+        submit_idx = 10
+        submit_date = engine._trading_dates[submit_idx]
+        lots = {
+            code: [PositionLot("young", submit_date - pd.Timedelta(days=3), 100.0)]
+        }
+        order = engine.submit_order(
+            "immature", OrderSide.REDEEM, code, submit_date, submit_date,
+            100.0 * engine.get_nav(code, submit_idx), 0.0,
+            {code: 100.0}, position_lots=lots,
+        )
+        assert order is None
+        assert engine._rejection_log[-1]["reason"] == (
+            "INSUFFICIENT_MATURE_UNRESERVED_LOTS"
+        )
+
+    def test_suspension_and_subscription_limit_are_enforced(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        date = engine._trading_dates[5]
+        event = TradingRestrictionEvent(
+            code, date, date, False, True, 1000.0,
+            "official temporary suspension", "notice",
+        )
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 1)},
+            events={code: [event]},
+        )
+        order = engine.submit_order(
+            "closed", OrderSide.SUBSCRIBE, code, date, date,
+            500.0, 1000.0, {},
+        )
+        assert order is None
+        assert engine._rejection_log[-1]["reason"] == "official temporary suspension"
+
+    def test_order_audit_exposes_fifo_and_effective_fee(self, clean_engine):
+        dates = clean_engine._trading_dates[:12]
+        targets = pd.DataFrame(
+            {"F001": [1.0, 0.0]}, index=[dates[0], dates[5]]
+        )
+        clean_engine.run_backtest(
+            targets, str(dates[0].date()), str(dates[-1].date()), rebalance_every=1
+        )
+        audit = clean_engine.order_audit_frame()
+        redemption = audit.loc[audit["side"] == "redeem"].iloc[0]
+        assert redemption["fifo_lot_count"] == 1
+        assert redemption["minimum_holding_days"] >= 0
+        assert redemption["effective_fee_rate"] == pytest.approx(0.0015)
+
+    def test_strict_rule_mode_blocks_uncovered_fund(self, test_db):
+        engine = OTFBacktestEngine(
+            test_db,
+            product_rule_book=ProductRuleBook(),
+            strict_product_rules=True,
+        )
+        date = engine._trading_dates[0]
+        with pytest.raises(RuntimeError, match="MISSING_PRODUCT_RULE:F001"):
+            engine.submit_order(
+                "missing", OrderSide.SUBSCRIBE, "F001", date, date,
+                100.0, 1000.0, {},
+            )
 
 
 class TestProductionData:
