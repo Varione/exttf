@@ -668,6 +668,41 @@ class TestAccountingCorrectness:
         assert new_fund_subscriptions[-1].submit_date > dates[5]
         assert new_fund_subscriptions[-1].signal_date == dates[5]
 
+    def test_minimum_trade_ratio_skips_small_rebalance(self, test_db):
+        engine = OTFBacktestEngine(
+            test_db,
+            subscription_fee_rate=0.0,
+            redemption_fee_rate=0.0,
+            minimum_trade_ratio=0.01,
+        )
+        dates = engine._trading_dates[:12]
+        targets = pd.DataFrame(
+            {"F001": [0.50, 0.505]},
+            index=pd.DatetimeIndex([dates[0], dates[5]]),
+        )
+
+        engine.run_backtest(
+            targets, str(dates[0].date()), str(dates[-1].date()), rebalance_every=1
+        )
+
+        subscriptions = [
+            order for order in engine.last_orders if order.side == OrderSide.SUBSCRIBE
+        ]
+        assert len(subscriptions) == 1
+
+    def test_fund_specific_fee_override(self, test_db):
+        engine = OTFBacktestEngine(
+            test_db,
+            subscription_fee_rate=0.01,
+            redemption_fee_rate=0.02,
+            fund_subscription_fee_rates={"F001": 0.0},
+            fund_redemption_fee_rates={"F001": 0.0},
+        )
+        assert engine.get_subscription_fee_rate("F001") == 0.0
+        assert engine.get_redemption_fee_rate("F001") == 0.0
+        assert engine.get_subscription_fee_rate("F002") == 0.01
+        assert engine.get_redemption_fee_rate("F002") == 0.02
+
 
 class TestProductionData:
     """Tests against production OTF database."""

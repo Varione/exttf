@@ -17,6 +17,7 @@ from otf_backtest_engine import OTFBacktestEngine
 
 ETF_DB = "data/processed/etf.sqlite"
 OTF_DB = "data/processed/otf_mapped.sqlite"
+OTF_RESEARCH_DB = "data/processed/otf_research.sqlite"
 REPORT_DIR = Path("reports/mapped_otf_strategy")
 
 
@@ -45,6 +46,7 @@ class MappedETFSignalBuilder:
                        MIN(n.nav_date) AS first_nav, MAX(n.nav_date) AS last_nav
                 FROM otf_fund_catalog c
                 JOIN otf_fund_nav n ON n.fund_code = c.fund_code
+                WHERE COALESCE(c.etf_symbol, '') <> ''
                 GROUP BY c.fund_code
                 """,
                 conn,
@@ -331,6 +333,7 @@ class MappedETFSignalBuilder:
         end: str = "2026-07-17",
         target_volatility: float = 0.10,
         max_weight: float = 0.25,
+        defensive_fund_code: str | None = None,
     ) -> tuple[pd.DataFrame, dict[pd.Timestamp, pd.Timestamp], pd.DataFrame]:
         """Strategic core sleeves with absolute momentum and monthly trading."""
         sleeves = self._select_core_sleeves().set_index("etf_symbol")
@@ -398,6 +401,16 @@ class MappedETFSignalBuilder:
                     candidates.loc[symbol, "fund_code"]: float(weight)
                     for symbol, weight in weights.items()
                 }
+            defensive_weight = 0.0
+            if (
+                defensive_fund_code is not None
+                and self._fund_has_history(
+                    defensive_fund_code, submit_date, minimum=60
+                )
+            ):
+                defensive_weight = max(0.0, 1.0 - sum(target.values()))
+                if defensive_weight > 1e-12:
+                    target[defensive_fund_code] = defensive_weight
             targets.append({"date": submit_date, **target})
             signal_dates[submit_date] = signal_date
             audits.append(
@@ -406,6 +419,7 @@ class MappedETFSignalBuilder:
                     "submit_date": submit_date,
                     "selected_count": len(candidates),
                     "target_exposure": sum(target.values()),
+                    "defensive_weight": defensive_weight,
                     "ex_ante_volatility": ex_ante_volatility,
                     "selected_etfs": ";".join(candidates.index),
                     "selected_sleeves": ";".join(candidates["sleeve"]),

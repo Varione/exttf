@@ -7,29 +7,37 @@ from pathlib import Path
 
 import pandas as pd
 
-from mapped_otf_strategy import MappedETFSignalBuilder, OTF_DB
+from mapped_otf_strategy import (
+    MappedETFSignalBuilder,
+    OTF_DB,
+    OTF_RESEARCH_DB,
+)
 from otf_backtest_engine import OTFBacktestEngine
 
 
 OUTPUT = Path("reports/mapped_otf_strategy/experiments")
 START = "2018-01-01"
 END = "2026-07-17"
+EXPERIMENT_DB = OTF_RESEARCH_DB if Path(OTF_RESEARCH_DB).exists() else OTF_DB
 
 
 def make_engine() -> OTFBacktestEngine:
     return OTFBacktestEngine(
-        OTF_DB,
+        EXPERIMENT_DB,
         confirmation_days_subscribe=1,
         confirmation_days_redeem=1,
         settlement_days_redeem=1,
         subscription_fee_rate=0.001,
         redemption_fee_rate=0.0015,
+        minimum_trade_ratio=0.005,
+        fund_subscription_fee_rates={"006663": 0.0},
+        fund_redemption_fee_rates={"006663": 0.0},
     )
 
 
 def run() -> pd.DataFrame:
     engine = make_engine()
-    builder = MappedETFSignalBuilder()
+    builder = MappedETFSignalBuilder(otf_db=EXPERIMENT_DB)
     variants = [
         ("M20_Top10_Trend", 20, 10, True),
         ("M10_Top10_Trend", 10, 10, True),
@@ -176,6 +184,49 @@ def run() -> pd.DataFrame:
     )
     core_audit.to_csv(
         OUTPUT / "signals_CoreSleeve_Monthly_Vol10.csv", index=False
+    )
+
+    defensive_code = "006663" if "006663" in engine.available_fund_codes else None
+    core_bond_targets, core_bond_signal_dates, core_bond_audit = (
+        builder.build_core_sleeve_targets(
+            engine._trading_dates,
+            start=START,
+            end=END,
+            defensive_fund_code=defensive_code,
+        )
+    )
+    if (
+        defensive_code is not None
+        and core_bond_targets.index.to_series().diff().dropna().dt.days.min() < 7
+    ):
+        raise RuntimeError("DEFENSIVE_C_SHARE_HOLDING_PERIOD_UNDER_7_DAYS")
+    core_bond_daily = engine.run_backtest(
+        core_bond_targets,
+        start=START,
+        end=END,
+        rebalance_every=1,
+        signal_dates=core_bond_signal_dates,
+    )
+    core_bond_metrics = engine.calculate_metrics(core_bond_daily)
+    core_bond_metrics.update(
+        {
+            "variant": "CoreSleeve_Monthly_Vol10_ShortBond",
+            "rebalance_every": 0,
+            "n_hold": int(core_bond_audit["selected_count"].max()) + 1,
+            "use_trend": True,
+            "signal_count": len(core_bond_audit),
+            "average_selected": float(
+                core_bond_targets.gt(1e-12).sum(axis=1).mean()
+            ),
+            "pit_status": "PIT_PARTIAL",
+        }
+    )
+    rows.append(core_bond_metrics)
+    core_bond_daily.to_csv(
+        OUTPUT / "daily_CoreSleeve_Monthly_Vol10_ShortBond.csv", index=False
+    )
+    core_bond_audit.to_csv(
+        OUTPUT / "signals_CoreSleeve_Monthly_Vol10_ShortBond.csv", index=False
     )
 
     # A single pre-specified portfolio-of-strategies candidate: retain the

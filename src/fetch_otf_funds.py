@@ -35,6 +35,7 @@ TARGET_FUNDS = {
     "007466": {"name": "华泰柏瑞中证红利低波ETF联接A", "asset_class": "红利", "benchmark": "中证红利低波"},
     "002610": {"name": "博时黄金ETF联接A", "asset_class": "黄金", "benchmark": "黄金"},
     "006662": {"name": "易方达安悦超短债A", "asset_class": "债券短久期", "benchmark": "短期债券"},
+    "006663": {"name": "易方达安悦超短债C", "asset_class": "债券短久期", "benchmark": "短期债券"},
     "270042": {"name": "广发纳斯达克100ETF联接人民币(QDII)A", "asset_class": "纳指100", "benchmark": "纳斯达克100"},
     "040046": {"name": "华安纳斯达克100ETF联接(QDII)A", "asset_class": "纳指100", "benchmark": "纳斯达克100"},
     "050025": {"name": "博时标普500ETF联接A", "asset_class": "标普500", "benchmark": "标普500"},

@@ -25,6 +25,8 @@ D:\miniconda\envs\agents\python.exe
 | 映射基金 NAV 扩充 | `src/fetch_mapped_otf_funds.py` |
 | ETF 信号到场外执行策略 | `src/mapped_otf_strategy.py` |
 | 场外策略稳健性实验 | `src/run_mapped_otf_experiments.py` |
+| 场外统一研究库 | `src/build_otf_research_db.py` |
+| 滚动稳定性验证 | `src/strategy_validation.py` |
 | 统一实验 | `src/run_unified_experiment.py` |
 | 可复现性审计 | `src/reproducibility_audit.py` |
 | 正式配置 | `config/unified_experiment.json` |
@@ -47,6 +49,10 @@ data/processed/otf_mapped.sqlite
   568,421 条 NAV 记录
   对应 382 个唯一场内 ETF 信号
 
+data/processed/otf_research.sqlite
+  438 只映射联接基金 + 1 只批准的短债防守基金
+  由脚本原子构建，不修改两个源数据库
+
 data/processed/factors_all_repaired.csv
   1,386,449 行、131 列
 ```
@@ -56,11 +62,13 @@ ETF 生命周期状态目前是 `PIT_PARTIAL`。场外数据来源为 AkShare / 
 ## 运行映射场外策略
 
 ```powershell
+& 'D:\miniconda\envs\agents\python.exe' src/build_otf_research_db.py
 & 'D:\miniconda\envs\agents\python.exe' src/mapped_otf_strategy.py
 & 'D:\miniconda\envs\agents\python.exe' src/run_mapped_otf_experiments.py
+& 'D:\miniconda\envs\agents\python.exe' src/strategy_validation.py
 ```
 
-当前基线只使用场内 ETF 产生收盘信号，账户实际仅申赎场外 ETF 联接基金。2018-01-01 至 2026-07-17 的研究结果为净 CAGR 10.31%、最大回撤 -21.10%，状态仍为 `PIT_PARTIAL`。完整限制与下一步见 [mapped_otf_strategy_report.md](mapped_otf_strategy_report.md)。
+当前基线只使用场内 ETF 产生收盘信号，账户实际仅申赎场外基金。加入 0.5% 最小调仓带后，2018-01-01 至 2026-07-17 的研究结果为净 CAGR 9.86%、最大回撤 -21.08%，状态仍为 `PIT_PARTIAL`。完整限制与下一步见 [mapped_otf_strategy_report.md](mapped_otf_strategy_report.md)。
 
 ## 验证命令
 

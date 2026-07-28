@@ -86,6 +86,9 @@ class OTFBacktestEngine:
         Starting cash balance (default 1_000_000).
     cash_daily_return : float
         Daily return earned on idle cash (default 0).
+    minimum_trade_ratio : float
+        Skip target adjustments smaller than this fraction of current account
+        equity.  The default 0 preserves legacy behavior.
     """
 
     def __init__(
@@ -100,6 +103,9 @@ class OTFBacktestEngine:
         initial_cash: float = 1_000_000.0,
         cash_daily_return: float = 0.0,
         reinvest_distributions: bool = True,
+        minimum_trade_ratio: float = 0.0,
+        fund_subscription_fee_rates: dict[str, float] | None = None,
+        fund_redemption_fee_rates: dict[str, float] | None = None,
     ):
         self.db_path = db_path
         self.confirmation_days_subscribe = confirmation_days_subscribe
@@ -109,6 +115,25 @@ class OTFBacktestEngine:
         self.redemption_fee_rate = redemption_fee_rate
         self.initial_cash = initial_cash
         self.cash_daily_return = cash_daily_return
+        self.minimum_trade_ratio = float(minimum_trade_ratio)
+        if not 0.0 <= self.minimum_trade_ratio < 1.0:
+            raise ValueError("minimum_trade_ratio must be in [0, 1)")
+        self.fund_subscription_fee_rates = {
+            str(code): float(rate)
+            for code, rate in (fund_subscription_fee_rates or {}).items()
+        }
+        self.fund_redemption_fee_rates = {
+            str(code): float(rate)
+            for code, rate in (fund_redemption_fee_rates or {}).items()
+        }
+        if any(
+            rate < 0
+            for rate in (
+                *self.fund_subscription_fee_rates.values(),
+                *self.fund_redemption_fee_rates.values(),
+            )
+        ):
+            raise ValueError("fund fee rates cannot be negative")
         self.reinvest_distributions = bool(reinvest_distributions)
         if not self.reinvest_distributions:
             raise ValueError(
@@ -317,6 +342,16 @@ class OTFBacktestEngine:
         """Check if a fund is QDII (requires longer confirmation)."""
         return self._fund_qdii_map.get(fund_code, False)
 
+    def get_subscription_fee_rate(self, fund_code: str) -> float:
+        return self.fund_subscription_fee_rates.get(
+            fund_code, self.subscription_fee_rate
+        )
+
+    def get_redemption_fee_rate(self, fund_code: str) -> float:
+        return self.fund_redemption_fee_rates.get(
+            fund_code, self.redemption_fee_rate
+        )
+
     def get_confirmation_days(
         self, fund_code: str, side: OrderSide
     ) -> int:
@@ -367,7 +402,7 @@ class OTFBacktestEngine:
         )
 
         if side == OrderSide.SUBSCRIBE:
-            fee = requested_amount * self.subscription_fee_rate
+            fee = requested_amount * self.get_subscription_fee_rate(fund_code)
             total_cost = requested_amount + fee
             if total_cost > available_cash + 1e-10:
                 return None
@@ -421,7 +456,11 @@ class OTFBacktestEngine:
                     order.fund_code, idx
                 )
             order.shares_confirmed = shares_to_redeem
-            fee = shares_to_redeem * confirm_nav * self.redemption_fee_rate
+            fee = (
+                shares_to_redeem
+                * confirm_nav
+                * self.get_redemption_fee_rate(order.fund_code)
+            )
             order.fee_paid = fee
             order.cash_released = shares_to_redeem * confirm_nav - fee
 
@@ -577,6 +616,9 @@ class OTFBacktestEngine:
             )
             if current_equity <= 0:
                 raise RuntimeError("OTF_ACCOUNT_EQUITY_NON_POSITIVE")
+            minimum_trade_amount = max(
+                1.0, current_equity * self.minimum_trade_ratio
+            )
 
             # A fund switch cannot spend redemption proceeds before they
             # arrive.  Complete the subscription leg of that same rebalance
@@ -585,11 +627,15 @@ class OTFBacktestEngine:
             if not pending_orders and deferred_subscriptions:
                 for fund_code in sorted(list(deferred_subscriptions)):
                     remaining = deferred_subscriptions[fund_code]
+                    if remaining <= minimum_trade_amount:
+                        deferred_subscriptions.pop(fund_code, None)
+                        continue
                     principal = min(
                         remaining,
-                        available_cash / (1.0 + self.subscription_fee_rate),
+                        available_cash
+                        / (1.0 + self.get_subscription_fee_rate(fund_code)),
                     )
-                    if principal <= 1.0:
+                    if principal <= minimum_trade_amount:
                         continue
                     order = self.submit_order(
                         order_id=f"ord-{uuid.uuid4().hex[:8]}",
@@ -608,7 +654,7 @@ class OTFBacktestEngine:
                     pending_orders.append(order)
                     all_orders.append(order)
                     remaining -= principal
-                    if remaining <= 1.0:
+                    if remaining <= minimum_trade_amount:
                         deferred_subscriptions.pop(fund_code, None)
                     else:
                         deferred_subscriptions[fund_code] = remaining
@@ -652,7 +698,7 @@ class OTFBacktestEngine:
                         continue
                     current_amount = positions.get(fund_code, 0.0) * valuation_nav
                     diff = target_amounts.get(fund_code, 0.0) - current_amount
-                    if diff >= -1.0:
+                    if diff >= -minimum_trade_amount:
                         continue
                     available_shares = max(
                         0.0,
@@ -687,13 +733,14 @@ class OTFBacktestEngine:
                         continue
                     current_amount = positions.get(fund_code, 0.0) * valuation_nav
                     diff = target_amounts[fund_code] - current_amount
-                    if diff <= 1.0:
+                    if diff <= minimum_trade_amount:
                         continue
                     principal = min(
                         diff,
-                        available_cash / (1.0 + self.subscription_fee_rate),
+                        available_cash
+                        / (1.0 + self.get_subscription_fee_rate(fund_code)),
                     )
-                    if principal <= 1.0:
+                    if principal <= minimum_trade_amount:
                         deferred_subscriptions[fund_code] = diff
                         continue
                     order = self.submit_order(
@@ -712,7 +759,7 @@ class OTFBacktestEngine:
                         pending_orders.append(order)
                         all_orders.append(order)
                         remaining = diff - principal
-                        if remaining > 1.0:
+                        if remaining > minimum_trade_amount:
                             deferred_subscriptions[fund_code] = remaining
                     else:
                         deferred_subscriptions[fund_code] = diff
