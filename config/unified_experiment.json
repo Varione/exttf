@@ -1,0 +1,67 @@
+{
+  "experiment_name": "unified_etf_strategy_experiment",
+  "canonical_db": "data/processed/etf.sqlite",
+  "factor_csv": "data/processed/factors_all_repaired.csv",
+  "regime_predictions_csv": "data/processed/regime_predictions.csv",
+  "data_mode": "etf",
+  "price_mode": "total_return_proxy",
+  "require_pit": true,
+  "require_full_pit": false,
+  "backtest_start": "2018-01-01",
+  "backtest_end": "2026-07-17",
+  "n_hold": 20,
+  "max_weight": 0.05,
+  "signal_to_return_lag": 2,
+  "rebalance_every": 5,
+  "fee_rate_per_side": 0.0003,
+  "slippage_rate_per_side": 0.0002,
+  "strategies": [
+    "S04_VolTarget_Trend",
+    "S23_Oversold_Long",
+    "S01_CS_Momentum",
+    "B0_BuyHold_EW",
+    "B1_Momentum_Agnostic"
+  ],
+  "oos_windows": [
+    {
+      "name": "OOS_2018_2021",
+      "start": "2018-01-01",
+      "end": "2021-12-31"
+    },
+    {
+      "name": "OOS_2022_2024",
+      "start": "2022-01-01",
+      "end": "2024-12-31"
+    },
+    {
+      "name": "OOS_2025_2026",
+      "start": "2025-01-01",
+      "end": "2026-07-17"
+    }
+  ],
+  "factor_validation": {
+    "expected_rows": 1386449,
+    "expected_symbols": 1549,
+    "expected_columns": 131
+  },
+  "report_dir": "reports/unified_experiment",
+  "otf_data": {
+    "canonical_db": "data/processed/otf.sqlite",
+    "nav_dir": "data/raw/otf_nav",
+    "manifest": "data/raw/otf_nav/otf_nav_manifest.csv",
+    "data_gate_report": "reports/data_validation/otf_data_gate.json",
+    "minimum_fund_count": 18,
+    "price_mode": "published_daily_growth_total_return_reinvested",
+    "confirmation_rule": "T+1",
+    "qdii_confirmation_rule": "T+3",
+    "fee_rate_subscription": 0.001,
+    "fee_rate_redemption": 0.0015,
+    "confirmation_days_subscribe": 1,
+    "confirmation_days_redeem": 1,
+    "settlement_days_redeem": 1
+  },
+  "otf_strategies": [
+    "OTF_EW",
+    "OTF_Momentum"
+  ]
+}

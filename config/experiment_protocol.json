@@ -1,0 +1,134 @@
+{
+  "protocol_version": "1.0.0",
+  "protocol_date": "2026-07-28",
+  "description": "Frozen experiment protocol for unified ETF strategy backtesting",
+
+  "units": {
+    "summary_csv_percentage_columns": [
+      "CAGR%",
+      "Total_Return%",
+      "Annualized_Volatility%",
+      "Max_Drawdown%",
+      "VaR_95%",
+      "CVaR_95%",
+      "Daily_Win_Rate%",
+      "Monthly_Win_Rate%",
+      "Exposure%",
+      "Cash_Ratio%",
+      "Active_Win_Rate%",
+      "Turnover%",
+      "Transaction_Cost_Drag%",
+      "Gross_CAGR%",
+      "Annualized_Cost_Drag%",
+      "Rolling_Return_12m_mean%",
+      "Excess_Return%",
+      "Tracking_Error%",
+      "Alpha%"
+    ],
+    "percentage_unit": "percent value (e.g., 4.26 means 4.26%, not 0.0426)",
+    "ratio_columns_no_suffix": [
+      "Sharpe",
+      "Sortino",
+      "Calmar",
+      "Skewness",
+      "Kurtosis",
+      "Beta",
+      "Information_Ratio",
+      "Total_Turnover"
+    ],
+    "ratio_unit": "dimensionless ratio (no percent conversion applied)",
+    "count_columns": [
+      "n_days",
+      "position_count",
+      "Longest_DD_Duration_days"
+    ],
+    "count_unit": "integer count or trading-day count"
+  },
+
+  "timing_definitions": {
+    "signal_date": "Date when factor signals are computed from available data (index signal_idx = full_idx - signal_to_return_lag)",
+    "order_submit_date": "Signal date + 1 trading day (implicit; not stored as separate column)",
+    "execution_date": "The backtest date T itself: positions determined by signal at T - signal_to_return_lag are held during T",
+    "return_accounting_date": "Same as execution date T. Daily net return is recorded for date T using target weights determined by the delayed signal",
+    "signal_to_return_lag": {
+      "value": 2,
+      "unit": "trading days",
+      "description": "Signal computed at T-2, order executes at T-1 NAV, first held return is T/T-1. With daily NAV data, lag=2 means the signal at date D is observed after market close, the order executes at next-day NAV, and the first held return is the day-after-next NAV change"
+    },
+    "rebalance_every": {
+      "value": 5,
+      "unit": "trading days",
+      "description": "Portfolio weights are recalculated every 5 trading days. Between rebalances, weights drift with price returns."
+    }
+  },
+
+  "cost_formulas": {
+    "fee_rate_per_side": {
+      "value": 0.0003,
+      "unit": "fraction (3 bp per side)"
+    },
+    "slippage_rate_per_side": {
+      "value": 0.0002,
+      "unit": "fraction (2 bp per side)"
+    },
+    "gross_traded_notional": "sum of absolute weight changes across all symbols: sum(|w_after - w_before|)",
+    "transaction_cost_daily": "traded_notional * (fee_rate_per_side + slippage_rate_per_side)",
+    "net_return_daily": "gross_return - transaction_cost",
+    "gross_return_daily": "sum(weight_i * ret_i) for all held positions + cash_weight * cash_daily_return",
+    "turnover_daily": "traded_notional / 2.0",
+    "turnover_unit_explanation": "Dividing gross traded notional by 2 converts buy-sell pairs into a single turnover ratio (conventional definition: one full portfolio turn = 1.0)"
+  },
+
+  "benchmark_weight_initialization": {
+    "B0_BuyHold_EW": {
+      "description": "Equal-weight buy and hold of all PIT-eligible symbols at first rebalance date",
+      "weight_per_symbol": "min(max_weight, 1.0 / n_eligible)",
+      "max_weight": 0.05,
+      "rebalance": "only at initialization (buy_and_hold=True); weights drift thereafter"
+    },
+    "B1_Momentum_Agnostic": {
+      "description": "Cross-sectional momentum without regime filter",
+      "regime": -1,
+      "rebalance": "every rebalance_every trading days"
+    },
+    "active_strategies": {
+      "S04_VolTarget_Trend": {"regime": 0, "description": "Volatility-targeted trend following in low-vol regime"},
+      "S23_Oversold_Long": {"regime": 1, "description": "Oversold bounce strategy in mean-reversion regime"},
+      "S01_CS_Momentum": {"regime": 2, "description": "Cross-sectional momentum in trending regime"}
+    }
+  },
+
+  "manifest_requirements": {
+    "required_fields": [
+      "run_id",
+      "timestamp",
+      "gate_passed",
+      "config",
+      "db_info",
+      "factor_manifest",
+      "full_period_results",
+      "oos_results",
+      "artifacts",
+      "regime_training_end",
+      "python_version",
+      "dependencies",
+      "git_commit",
+      "git_status",
+      "code_fingerprint"
+    ],
+    "artifact_sha256_files": [
+      "factor_csv",
+      "factor_csv.manifest.json",
+      "regime_predictions_csv",
+      "data/processed/factor_correlation.csv"
+    ]
+  },
+
+  "reproducibility_rules": {
+    "single_entry_point": "src/run_unified_experiment.py",
+    "config_file": "config/unified_experiment.json",
+    "skip_factor_rebuild_flag": "--skip-factor-rebuild",
+    "repeatability_test": "Same config run twice must produce identical summary metrics and artifact SHA256 (excluding timestamp fields)",
+    "timestamp_excluded_fields": ["timestamp"]
+  }
+}

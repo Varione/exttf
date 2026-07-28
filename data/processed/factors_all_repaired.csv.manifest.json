@@ -1,0 +1,11 @@
+{
+  "completed": true,
+  "row_count": 1386449,
+  "symbol_count": 1549,
+  "date_min": "2005-02-23",
+  "date_max": "2026-07-17",
+  "schema_hash": "dd4fa3c6616a54b8",
+  "source_db_fingerprint": "3441d394e7cc8cb0",
+  "price_mode": "total_return_proxy",
+  "validation_errors": []
+}

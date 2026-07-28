@@ -1,60 +1,77 @@
-# 场外 ETF 联接基金跨资产周频轮动
+# ETF / 场外基金量化研究平台
 
-这是第一版研究 baseline：在指数/场内 ETF 价格层计算信号，在场外 ETF 联接基金层执行。策略采用 60 日风险调整动量、120 日趋势过滤、周频调仓、Top 3 等权；没有合格风险资产时持有防御资产。
+本项目用于日频 ETF 信号研究与场外基金 NAV 回测，当前重点是数据质量、时序、账户会计和可复现性，不是实盘交易系统。
 
-## 数据源决定
+## 固定运行环境
 
-默认数据源：AKShare。它不要求 Token，适合第一版研究和小规模日频抓取：
-
-- `fund_etf_hist_em`：场内 ETF 历史行情，用于信号层；网络受限时自动回退到 `fund_etf_hist_sina`；
-- `fund_open_fund_info_em`：开放式基金单位净值历史，用于执行层；
-- `fund_open_fund_daily_em` / `fund_info_index_em`：基金列表和基本信息辅助表。
-
-增强数据源：Tushare Pro。需要注册 Token 和至少相应接口积分，作为可选校验源，不作为默认依赖。正式实盘前，应把关键净值和申赎规则与基金公司公告/招募说明书交叉核验。
-
-## 快速开始
+Windows 下统一使用：
 
 ```powershell
-python -m pip install -e ".[data,dev]"
-python -m pytest
+D:\miniconda\envs\agents\python.exe
 ```
 
-如果本机 pip 镜像找不到 AKShare，改用公开 PyPI：
+当前验证环境为 Python 3.12.13。不要使用系统 Python 运行正式测试或实验。
+
+## 正式入口
+
+| 模块 | 文件 |
+|---|---|
+| ETF 数据读取 | `src/data_loader.py` |
+| 因子定义与构建 | `src/factor_definitions.py`、`src/factor_engine.py` |
+| ETF 策略与回测 | `src/strategy_library.py`、`src/backtest_engine.py` |
+| 场外数据抓取 | `src/fetch_otf_funds.py` |
+| 场外 NAV 回测 | `src/otf_backtest_engine.py` |
+| 统一实验 | `src/run_unified_experiment.py` |
+| 可复现性审计 | `src/reproducibility_audit.py` |
+| 正式配置 | `config/unified_experiment.json` |
+
+`quick_*`、`run_phase*` 和 `debug_*` 目前只属于研究辅助脚本，不得绕过统一入口生成“正式结果”。
+
+## 当前权威数据
+
+```text
+data/processed/etf.sqlite
+  1,549 只 ETF
+  1,386,449 条日频记录
+
+data/processed/otf.sqlite
+  18 只场外基金
+  56,672 条 NAV 记录
+
+data/processed/factors_all_repaired.csv
+  1,386,449 行、131 列
+```
+
+ETF 生命周期状态目前是 `PIT_PARTIAL`。场外数据来源为 AkShare / 东方财富公开数据，尚未达到全量官方独立验证。
+
+## 验证命令
 
 ```powershell
-python -m pip install --index-url https://pypi.org/simple -e ".[data,dev]"
+& 'D:\miniconda\envs\agents\python.exe' -m pytest -q -W error::FutureWarning
 ```
 
-先用内置模拟数据验证回测：
+2026-07-28 审计基线：
+
+```text
+230 passed
+```
+
+## 运行统一实验
+
+复用已经完成并通过 manifest 校验的正式因子文件：
 
 ```powershell
-python -m otf_rotation.cli demo --output-dir reports
+& 'D:\miniconda\envs\agents\python.exe' src/run_unified_experiment.py --skip-factor-rebuild
 ```
 
-联网抓取场内 ETF 信号价格：
+不加 `--skip-factor-rebuild` 会重新构建约 3.38 GB 的因子文件，耗时和磁盘写入都较大。
 
-```powershell
-python -m otf_rotation.cli fetch-etf --config config/universe.csv --start-date 20180101 --end-date 20260718
-```
+## 当前限制
 
-抓取当前可发现的全部 ETF 历史日线（每只 ETF 一个 CSV，支持断点续传）：
+- 缺少覆盖历史退市、清盘和合并产品的独立 PIT 目录；
+- 官方价格/NAV 独立验证覆盖率仍低；
+- 场外基金暂用统一费用和确认规则，尚未完成产品级申赎规则；
+- 当前主动策略尚未在滚动 OOS 和成本后稳定超过基准；
+- 不应根据现有结果直接实盘。
 
-```powershell
-python -m otf_rotation.cli fetch-all-etf --start-date 20000101 --end-date 20500101 --workers 4
-```
-
-输出目录包含 `etf_catalog.csv`、`history/<代码>.csv`、`etf_fetch_status.csv` 和失败清单 `etf_failed.csv`。这里的“全部”指 AKShare 当前 ETF 行情清单中的产品及其可返回的历史日线 OHLCV/成交额，不包含场外联接基金 NAV。
-
-运行回测：
-
-```powershell
-python -m otf_rotation.cli backtest --prices data/raw/signal_prices.csv --output-dir reports
-```
-
-## 重要的执行假设
-
-策略在周末收盘数据上生成信号，新权重从下一个可用交易日开始生效；不会用当日收盘信号获得当日成交。`backtest` 的 `--cost-bps` 是每次组合换手的简化成本，默认 10 bps。QDII 的真实净值确认、申购截止时间、赎回到账和限购状态尚未自动推断，后续应加入产品级规则表。
-
-## 数据文件格式
-
-`data/raw/signal_prices.csv` 为宽表：第一列 `date`，其余列为 `asset`，数值为场内 ETF 收盘价。`config/universe.csv` 中的 `signal_symbol` 是场内 ETF 代码；`implementation_fund` 预留给场外联接基金代码，不参与当前信号回测，避免未经核验地把基金代码写死。
+完整状态、已修复问题和下一步顺序见 [planning.md](planning.md)。
