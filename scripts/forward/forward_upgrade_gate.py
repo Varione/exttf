@@ -52,6 +52,36 @@ def _frozen_row(strategy_key: str) -> dict:
     return {}
 
 
+def _threshold_sources(strategy_key: str) -> tuple[dict, dict, dict]:
+    """Pre-registered thresholds (planning P2-4 rules 6/7/8).
+
+    Thresholds must come from the frozen config files, never from numbers
+    observed after the fact. C3 uses its stricter dedicated config; other
+    strategies use the shared candidate gate thresholds.
+    """
+    if strategy_key == "C3":
+        config = _load_json(ROOT / "config" / "c3_low_turnover_momentum.json")
+    else:
+        config = _load_json(ROOT / "config" / "candidate_strategies.json")
+    thresholds = config.get("gate_thresholds", {})
+    relative = (
+        config.get("relative_upgrade_thresholds")
+        or thresholds.get("relative_b2lt_gate")
+        or {}
+    )
+    stress = {
+        "double_fee_net_cagr_min_pct": thresholds.get("double_fee_net_cagr_min_pct"),
+        "double_fee_sharpe_min": thresholds.get("double_fee_sharpe_min"),
+        "double_fee_mdd_min_pct_exclusive": thresholds.get(
+            "double_fee_mdd_min_pct_exclusive"
+        ),
+        "delay_cagr_decline_max_pct_points": thresholds.get(
+            "delay_cagr_decline_max_pct_points"
+        ),
+    }
+    return thresholds, relative, stress
+
+
 def _shadow_decisions() -> list[dict]:
     decision_dir = SHADOW_ROOT / "decisions"
     if not decision_dir.exists():
@@ -117,6 +147,10 @@ def main() -> int:
     decisions = _shadow_decisions()
     sample_status, sample_detail = _fresh_sample_check(decisions)
 
+    gate_thresholds, relative_thresholds, stress_thresholds = _threshold_sources(
+        strategy_key
+    )
+
     conditions = [
         {
             "id": 1,
@@ -143,7 +177,7 @@ def main() -> int:
         {
             "id": 4,
             "name": "forward reconciliation",
-            "status": "FAIL" if not decisions else "NOT_MEASURED",
+            "status": "NOT_MEASURED" if not decisions else "FAIL",
             "evidence": (
                 "no forward decisions; run "
                 "scripts/forward/validate_shadow_records.py once records exist"
@@ -162,20 +196,32 @@ def main() -> int:
         {
             "id": 6,
             "name": "risk cost turnover rolling gate",
-            "status": "FAIL" if not decisions else "NOT_MEASURED",
-            "evidence": "requires forward daily NAV and shadow orders",
+            "status": "NOT_MEASURED" if not decisions else "FAIL",
+            "evidence": (
+                f"pre-registered thresholds: "
+                + json.dumps(gate_thresholds, ensure_ascii=False)
+                + "; requires forward daily NAV and shadow orders"
+            ),
         },
         {
             "id": 7,
             "name": "pre-registered incremental bar vs B2-LT",
-            "status": "FAIL" if not decisions else "NOT_MEASURED",
-            "evidence": "requires concurrent B2-LT forward shadow records",
+            "status": "NOT_MEASURED" if not decisions else "FAIL",
+            "evidence": (
+                f"pre-registered relative thresholds: "
+                + json.dumps(relative_thresholds, ensure_ascii=False)
+                + "; requires concurrent B2-LT forward shadow records"
+            ),
         },
         {
             "id": 8,
             "name": "double fee and execution delay stress",
-            "status": "FAIL" if not decisions else "NOT_MEASURED",
-            "evidence": "requires a stress rerun of the forward sample",
+            "status": "NOT_MEASURED" if not decisions else "FAIL",
+            "evidence": (
+                f"pre-registered stress thresholds: "
+                + json.dumps(stress_thresholds, ensure_ascii=False)
+                + "; requires a stress rerun of the forward sample"
+            ),
         },
         {
             "id": 9,

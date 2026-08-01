@@ -147,3 +147,14 @@ class TestForwardUpgradeGate:
         assert p1["status"] == "FAIL"
         p0 = next(c for c in gate["conditions"] if c["id"] == 1)
         assert p0["status"] == "PASS"
+
+    def test_pre_registered_thresholds_wired(self):
+        result = _run_script("scripts/forward/forward_upgrade_gate.py", "C3")
+        gate = json.loads(result.stdout)
+        c6 = next(c for c in gate["conditions"] if c["id"] == 6)
+        assert c6["status"] == "NOT_MEASURED"
+        assert "mdd_min_pct_exclusive" in c6["evidence"]
+        c7 = next(c for c in gate["conditions"] if c["id"] == 7)
+        assert "cagr_advantage_min_pct_points" in c7["evidence"]
+        c8 = next(c for c in gate["conditions"] if c["id"] == 8)
+        assert "double_fee_net_cagr_min_pct" in c8["evidence"]

@@ -25,7 +25,7 @@
     {
       "id": 4,
       "name": "forward reconciliation",
-      "status": "FAIL",
+      "status": "NOT_MEASURED",
       "evidence": "no forward decisions; run scripts/forward/validate_shadow_records.py once records exist"
     },
     {
@@ -37,20 +37,20 @@
     {
       "id": 6,
       "name": "risk cost turnover rolling gate",
-      "status": "FAIL",
-      "evidence": "requires forward daily NAV and shadow orders"
+      "status": "NOT_MEASURED",
+      "evidence": "pre-registered thresholds: {\"net_cagr_min_pct\": 6.0, \"sharpe_min\": 0.9, \"mdd_min_pct_exclusive\": -12.0, \"calmar_min\": 0.55, \"relative_b2lt_gate\": {\"cagr_advantage_min_pct_points\": 0.5, \"sharpe_advantage_min\": 0.1}, \"worst_two_year_cagr_min_pct\": -1.5, \"rolling_two_year_positive_min_pct\": 90.0, \"sustained_annual_confirmed_turnover_max_exclusive\": 0.8, \"double_fee_net_cagr_min_pct\": 5.5, \"double_fee_sharpe_min\": 0.85, \"double_fee_mdd_min_pct_exclusive\": -12.0, \"delay_cagr_decline_max_pct_points\": 1.0, \"subperiod_net_cagr_positive\": 0.0, \"subperiod_sharpe_min\": 0.5}; requires forward daily NAV and shadow orders"
     },
     {
       "id": 7,
       "name": "pre-registered incremental bar vs B2-LT",
-      "status": "FAIL",
-      "evidence": "requires concurrent B2-LT forward shadow records"
+      "status": "NOT_MEASURED",
+      "evidence": "pre-registered relative thresholds: {\"cagr_advantage_min_pct_points\": 0.5, \"sharpe_advantage_min\": 0.1}; requires concurrent B2-LT forward shadow records"
     },
     {
       "id": 8,
       "name": "double fee and execution delay stress",
-      "status": "FAIL",
-      "evidence": "requires a stress rerun of the forward sample"
+      "status": "NOT_MEASURED",
+      "evidence": "pre-registered stress thresholds: {\"double_fee_net_cagr_min_pct\": 5.5, \"double_fee_sharpe_min\": 0.85, \"double_fee_mdd_min_pct_exclusive\": -12.0, \"delay_cagr_decline_max_pct_points\": 1.0}; requires a stress rerun of the forward sample"
     },
     {
       "id": 9,
