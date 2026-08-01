@@ -1,0 +1,14 @@
+{
+  "C1": {
+    "C1_C1_CORE_SATELLITE_MOMENTUM_metrics_sha": "013ded98407cc51e7de9b8dc5c65881970e0c577b9af0435d90d82c8ba668ba9",
+    "C1_C1_CORE_SATELLITE_MOMENTUM_manifest_sha": "d16b991b313ebed7c269d306aebfc0fefe4e839ce3af438e3531d3b66998e4a3",
+    "C1_B2_Static_EW_4Asset_metrics_sha": "2486989bedbd5091d3de2f2d7ca9de9671ed484a29eac3be0e7f00ae55169f90",
+    "C1_B2_Static_EW_4Asset_manifest_sha": "62f0b0514f0e30c39475a91b3969ff440b1a941563748dd87ec521bea71d2ad3",
+    "C1_B2_LT_Static_EW_4Asset_metrics_sha": "34f6c1b5cbbb0cc47579d2f69f8cea07c71ac9bc352dc1e09010278ccb40ff99",
+    "C1_B2_LT_Static_EW_4Asset_manifest_sha": "e6f785d43c6134adc69b9c6b24117d16af12dddd15c3e41e94a108883d7d6cee",
+    "C1_main_manifest_sha": "6d685522854aff88cdb97cd528c769563e8f7cc6d7e78519621f89c3ea5f44ce"
+  },
+  "C2": {
+    "C2_main_manifest_sha": "f9f8877646b68c4c7af4f5f785d71b3fd72991610447e021835e50bbf8e269d4"
+  }
+}

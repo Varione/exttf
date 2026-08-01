@@ -1,0 +1,25 @@
+{
+  "experiment": "B1_B2_B3_S1_WALKFORWARD",
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "oos_start": "2021-01-01",
+  "oos_end": "2026-07-29",
+  "initial_cash": 1000000.0,
+  "annual_restart_sensitivity": true,
+  "rule_scenario": "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO",
+  "historical_rule_status": "NOT_ESTABLISHED",
+  "strategies": [
+    "B1_Static_60_20_20",
+    "B2_Static_EW_4Asset",
+    "B3_Rolling_Risk_Parity",
+    "S1_State_Rotation_Fixed"
+  ],
+  "gate_thresholds": {
+    "sharpe_min": 0.5,
+    "mdd_min_pct": -15.0,
+    "net_cagr_min_pct": 0.0,
+    "annualized_cost_drag_max_pct": 1.25,
+    "annual_bilateral_turnover_max": 1.0,
+    "rolling_two_year_positive_ratio_min_pct": 75.0,
+    "worst_two_year_cagr_min_pct": -3.0
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "strategy_name": "C3_LOW_TURNOVER_MOMENTUM",
+  "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "requested_oos_period": [
+    "2021-01-04",
+    "2026-07-27"
+  ],
+  "rule_scenario": "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO",
+  "historical_rule_status": "NOT_ESTABLISHED",
+  "parameter_search": "FORBIDDEN_ALL_PARAMETERS_FROZEN_ONCE",
+  "core_weights": {
+    "001512": 0.2,
+    "000148": 0.15,
+    "000218": 0.2,
+    "260102": 0.15
+  },
+  "satellite_budget": 0.3,
+  "satellite_pool": [
+    "160706",
+    "000008",
+    "007466",
+    "050021",
+    "050025",
+    "000071"
+  ],
+  "maximum_satellites": 2,
+  "satellite_slot_weight": 0.15,
+  "minimum_published_observations": 253,
+  "momentum": {
+    "short_total_return_days": 126,
+    "long_total_return_days": 252,
+    "score_short_weight": 0.5,
+    "score_long_weight": 0.5,
+    "trend_ma_days": 200,
+    "trend_condition": "TOTAL_RETURN_INDEX_GE_MA200",
+    "positive_condition": "MOMENTUM_SCORE_GT_ZERO"
+  },
+  "schedule": {
+    "observation_frequency": "quarter_end",
+    "submit": "next_china_execution_day",
+    "first_build_required": true
+  },
+  "selection": {
+    "min_holding_quarters": 2,
+    "retain_rules": [
+      "trend_passing",
+      "positive_momentum",
+      "cross_sectional_rank_le_3"
+    ],
+    "emergency_exit_conditions": [
+      "below_ma200",
+      "momentum_le_zero"
+    ],
+    "initial_build": "top2_by_rank"
+  },
+  "budget_fallback": {
+    "unused_satellite_to_core_ratio": {
+      "001512": 2.0,
+      "260102": 1.0
+    }
+  },
+  "rebalance": {
+    "triggers": [
+      "satellite_selection_set_changed"
+    ],
+    "core_adjustment_deviation_threshold_pct_points": 8.0,
+    "continuous_volatility_scaling": false,
+    "empty_signal_action": "NO_TRADE_KEEP_HOLDINGS",
+    "intra_quarter_drift_rebalance": false,
+    "quarter_end_drift_threshold_enabled": true
+  },
+  "risk": {
+    "volatility_target_pct": null,
+    "satellite_scale_bounds": null,
+    "continuous_volatility_scaling": false
+  },
+  "gate_thresholds": {
+    "net_cagr_min_pct": 6.0,
+    "sharpe_min": 0.9,
+    "mdd_min_pct_exclusive": -12.0,
+    "calmar_min": 0.55,
+    "relative_b2lt_gate": {
+      "cagr_advantage_min_pct_points": 0.5,
+      "sharpe_advantage_min": 0.1
+    },
+    "worst_two_year_cagr_min_pct": -1.5,
+    "rolling_two_year_positive_min_pct": 90.0,
+    "sustained_annual_confirmed_turnover_max_exclusive": 0.8,
+    "double_fee_net_cagr_min_pct": 5.5,
+    "double_fee_sharpe_min": 0.85,
+    "double_fee_mdd_min_pct_exclusive": -12.0,
+    "delay_cagr_decline_max_pct_points": 1.0,
+    "subperiod_net_cagr_positive": 0.0,
+    "subperiod_sharpe_min": 0.5
+  },
+  "stress_scenarios": {
+    "double_fees": {
+      "subscription_fee_multiplier": 2.0,
+      "redemption_fee_multiplier": 2.0
+    },
+    "delay_plus_one_trading_day": {
+      "subscription_confirmation_days_increment": 1,
+      "redemption_confirmation_days_increment": 1,
+      "redemption_arrival_days_increment": 1,
+      "rule_override_required_when_product_rule_hits": true
+    }
+  },
+  "benchmarks": [
+    "B2_LT_Static_EW_4Asset"
+  ],
+  "references": {
+    "c1_final_run": "core_satellite_20260730_124538",
+    "c2_final_run": "low_turnover_core_satellite_20260730_125734",
+    "attribution_run": "phase_a_calendar_final_20260730_212320"
+  }
+}

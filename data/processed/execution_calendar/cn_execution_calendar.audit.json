@@ -1,0 +1,33 @@
+{
+  "schema_version": "cn_execution_calendar_v1",
+  "calendar_path": "data\\processed\\execution_calendar\\cn_execution_calendar.csv",
+  "source": "ETF_DAILY_DISTINCT_DATE_PLUS_4_OF_4_DOMESTIC_EQUITY_NAV_CONSENSUS",
+  "consensus_count": 4,
+  "primary_source_max_date": "2026-07-17",
+  "extension_start": "2026-07-20",
+  "extension_end": "2026-07-27",
+  "extension_codes": [
+    "160706",
+    "000008",
+    "050021",
+    "007466"
+  ],
+  "accepted_extension_dates": [
+    "2026-07-20",
+    "2026-07-21",
+    "2026-07-22",
+    "2026-07-23",
+    "2026-07-24",
+    "2026-07-27"
+  ],
+  "input_hashes": {
+    "primary_db_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c",
+    "otf_db_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79"
+  },
+  "calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+  "coverage": {
+    "min_date": "2005-02-23",
+    "max_date": "2026-07-27",
+    "count": 5207
+  }
+}

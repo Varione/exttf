@@ -1,0 +1,78 @@
+{
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "requested_oos_period": ["2021-01-04", "2026-07-27"],
+  "annual_restart_sensitivity_status": "NOT_RUN",
+  "rule_scenario": "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO",
+  "historical_rule_status": "NOT_ESTABLISHED",
+  "b2_baseline": {
+    "name": "B2_Static_EW_4Asset",
+    "products": {
+      "160706": 0.25,
+      "000218": 0.25,
+      "001512": 0.25,
+      "260102": 0.25
+    },
+    "observation_frequency": "month_end"
+  },
+  "b2_lt": {
+    "name": "B2_LT_Static_EW_4Asset",
+    "products": {
+      "160706": 0.25,
+      "000218": 0.25,
+      "001512": 0.25,
+      "260102": 0.25
+    },
+    "observation_frequency": "quarter_end",
+    "rebalance_threshold_pct_points": 5.0,
+    "first_observation_must_build": true
+  },
+  "d1": {
+    "name": "D1_MultiAsset_Trend_Defensive",
+    "observation_frequency": "month_end",
+    "trend_ma_published_nav_days": 200,
+    "rebalance_threshold_pct_points": 5.0,
+    "fallback_fund": "260102",
+    "asset_budgets": {
+      "domestic_equity": 0.25,
+      "overseas_equity": 0.15,
+      "gold": 0.15,
+      "bonds": 0.35,
+      "cash": 0.10
+    },
+    "products": {
+      "160706": {"asset_class": "domestic_equity", "budget": 0.15, "trend_filter": true},
+      "007466": {"asset_class": "domestic_equity", "budget": 0.10, "trend_filter": true},
+      "050025": {"asset_class": "overseas_equity", "budget": 0.10, "trend_filter": true},
+      "000071": {"asset_class": "overseas_equity", "budget": 0.05, "trend_filter": true},
+      "000218": {"asset_class": "gold", "budget": 0.15, "trend_filter": false},
+      "001512": {"asset_class": "bonds", "budget": 0.20, "trend_filter": false},
+      "000148": {"asset_class": "bonds", "budget": 0.10, "trend_filter": false},
+      "006663": {"asset_class": "bonds", "budget": 0.05, "trend_filter": false},
+      "260102": {"asset_class": "cash", "budget": 0.10, "trend_filter": false}
+    },
+    "pit_history_facts": {
+      "160706": "2005",
+      "007466": "2019-07",
+      "050025": "2012",
+      "000071": "2012",
+      "000218": "2016",
+      "001512": "2015",
+      "000148": "2013",
+      "006663": "2018",
+      "260102": "2005"
+    }
+  },
+  "relative_upgrade_thresholds": {
+    "cagr_advantage_pct_points": 0.75,
+    "sharpe_advantage": 0.15
+  },
+  "gate_thresholds": {
+    "sharpe_min": 0.5,
+    "mdd_min_pct": -15.0,
+    "net_cagr_min_pct": 0.0,
+    "annualized_cost_drag_max_pct": 1.25,
+    "annual_bilateral_turnover_max": 1.0,
+    "rolling_two_year_positive_ratio_min_pct": 75.0,
+    "worst_two_year_cagr_min_pct": -3.0
+  }
+}

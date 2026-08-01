@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -94,3 +95,87 @@ def test_channel_discount_does_not_discount_redemption_or_fixed_fee():
     assert book.subscription_fee_amount("F", 100.0, 0.0) == pytest.approx(0.1)
     assert book.subscription_fee_amount("F", 2000.0, 0.0) == 10.0
     assert book.fee_rate("F", 10, 0.0) == pytest.approx(0.02)
+
+
+def test_is_rule_allowed_checks_status():
+    rule = FundTradingRule("F", 0.0, 1, 1, 1, rule_status="PRODUCT_TYPE_ASSUMPTION")
+    book = ProductRuleBook({"F": rule}, allowed_rule_statuses=ProductRuleBook.FORMAL_RESEARCH_STATUSES)
+    allowed, reason = book.is_rule_allowed("F")
+    assert not allowed
+    assert "RULE_STATUS_NOT_ALLOWED" in reason
+
+
+def test_is_rule_allowed_checks_effective_from():
+    rule = FundTradingRule(
+        "F", 0.0, 1, 1, 1, rule_status="OFFICIAL_VERIFIED",
+        effective_from="2024-06-01",
+    )
+    book = ProductRuleBook({"F": rule})
+    allowed_before, _ = book.is_rule_allowed("F", submit_date=date(2024, 1, 1))
+    assert not allowed_before
+    allowed_after, _ = book.is_rule_allowed("F", submit_date=date(2024, 7, 1))
+    assert allowed_after
+
+
+def test_is_rule_allowed_checks_effective_to():
+    rule = FundTradingRule(
+        "F", 0.0, 1, 1, 1, rule_status="OFFICIAL_VERIFIED",
+        effective_to="2024-06-30",
+    )
+    book = ProductRuleBook({"F": rule})
+    allowed_before, _ = book.is_rule_allowed("F", submit_date=date(2024, 1, 1))
+    assert allowed_before
+    allowed_after, _ = book.is_rule_allowed("F", submit_date=date(2024, 7, 1))
+    assert not allowed_after
+
+
+def test_is_rule_allowed_checks_channel():
+    rule = FundTradingRule(
+        "F", 0.0, 1, 1, 1, rule_status="OFFICIAL_VERIFIED",
+        channel="TiantianFund",
+    )
+    book = ProductRuleBook({"F": rule})
+    allowed_match, _ = book.is_rule_allowed("F", channel="TiantianFund")
+    assert allowed_match
+    allowed_mismatch, reason = book.is_rule_allowed("F", channel="Alipay")
+    assert not allowed_mismatch
+    assert "CHANNEL_MISMATCH" in reason
+
+
+def test_is_rule_allowed_no_date_or_channel_skips_checks():
+    rule = FundTradingRule(
+        "F", 0.0, 1, 1, 1, rule_status="OFFICIAL_VERIFIED",
+        effective_from="2024-06-01", channel="TiantianFund",
+    )
+    book = ProductRuleBook({"F": rule})
+    allowed, _ = book.is_rule_allowed("F")
+    assert allowed
+
+
+def test_is_rule_allowed_missing_rule():
+    book = ProductRuleBook()
+    allowed, reason = book.is_rule_allowed("MISSING123")
+    assert not allowed
+    assert reason == "RULE_MISSING"
+
+
+def test_is_rule_allowed_empty_dates_tolerated():
+    rule = FundTradingRule(
+        "F", 0.0, 1, 1, 1, rule_status="OFFICIAL_VERIFIED",
+        effective_from="", effective_to="",
+    )
+    book = ProductRuleBook({"F": rule})
+    allowed, _ = book.is_rule_allowed("F", submit_date=date(2020, 1, 1))
+    assert allowed
+
+
+def test_is_rule_allowed_partial_dates():
+    rule = FundTradingRule(
+        "F", 0.0, 1, 1, 1, rule_status="OFFICIAL_VERIFIED",
+        effective_from="2024-01-01", effective_to="",
+    )
+    book = ProductRuleBook({"F": rule})
+    allowed_before, _ = book.is_rule_allowed("F", submit_date=date(2023, 6, 1))
+    assert not allowed_before
+    allowed_after, _ = book.is_rule_allowed("F", submit_date=date(2025, 1, 1))
+    assert allowed_after

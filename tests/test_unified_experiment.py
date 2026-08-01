@@ -19,10 +19,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from run_unified_experiment import (
     DataGate,
     FactorBuilder,
+    _resolve_config_path,
     compute_file_sha256,
     get_db_schema,
     get_db_table_counts,
 )
+
+
+def test_explicit_config_path_is_honored(tmp_path):
+    requested = tmp_path / "full_etf.json"
+    assert _resolve_config_path(["--config", str(requested)]) == str(
+        requested.resolve()
+    )
+
+
+def test_config_flag_requires_path():
+    with pytest.raises(ValueError, match="requires a JSON file path"):
+        _resolve_config_path(["--config"])
 
 
 @pytest.fixture

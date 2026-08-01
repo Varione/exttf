@@ -15,31 +15,89 @@ from data_loader import load_etf_daily, get_valid_symbols
 from factor_definitions import FACTORS, FactorDef
 
 
-def _compute_db_fingerprint(db_path: str) -> str:
-    """Compute a content-based fingerprint of the source database file.
+def _update_hash_from_query(
+    conn: sqlite3.Connection,
+    digest,
+    label: str,
+    query: str,
+) -> None:
+    digest.update(label.encode("utf-8"))
+    cursor = conn.execute(query)
+    while True:
+        rows = cursor.fetchmany(10_000)
+        if not rows:
+            break
+        for row in rows:
+            for value in row:
+                encoded = b"<NULL>" if value is None else str(value).encode("utf-8")
+                digest.update(len(encoded).to_bytes(8, "big"))
+                digest.update(encoded)
 
-    Hashes raw bytes of the SQLite file so that any data change is detected.
-    Falls back to metadata-based hash only if the file cannot be read.
-    Limitation: this does not detect changes to WAL/shm files that have not
-    been checkpointed into the main database file.
+
+def _compute_db_fingerprint(
+    db_path: str,
+    price_mode: str = "total_return_proxy",
+) -> str:
+    """Hash only database content that can affect the factor artifact.
+
+    Audit tables and independent-reference samples may change without
+    changing factors. Hashing the entire SQLite file made those harmless
+    metadata updates invalidate a multi-gigabyte factor artifact.
     """
     try:
         h = hashlib.sha256()
-        with open(db_path, "rb") as fh:
-            while True:
-                chunk = fh.read(65536)
-                if not chunk:
-                    break
-                h.update(chunk)
+        with sqlite3.connect(db_path) as conn:
+            tables = {
+                row[0]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                ).fetchall()
+            }
+            h.update(f"factor-source-v2:{price_mode}".encode("utf-8"))
+            if "etf_daily" in tables:
+                _update_hash_from_query(
+                    conn,
+                    h,
+                    "etf_daily",
+                    """
+                    SELECT symbol,date,open,high,low,close,volume,amount
+                    FROM etf_daily ORDER BY symbol,date
+                    """,
+                )
+                if price_mode != "raw_close":
+                    if "etf_daily_price_modes" not in tables:
+                        return "unknown"
+                    columns = {
+                        row[1]
+                        for row in conn.execute(
+                            "PRAGMA table_info(etf_daily_price_modes)"
+                        ).fetchall()
+                    }
+                    if price_mode not in columns:
+                        return "unknown"
+                    _update_hash_from_query(
+                        conn,
+                        h,
+                        f"etf_daily_price_modes:{price_mode}",
+                        f"""
+                        SELECT symbol,date,{price_mode},validation_status
+                        FROM etf_daily_price_modes ORDER BY symbol,date
+                        """,
+                    )
+            else:
+                # Generic deterministic fallback keeps the helper useful for
+                # tests and non-ETF databases.
+                for table in sorted(tables):
+                    safe_table = table.replace('"', '""')
+                    _update_hash_from_query(
+                        conn,
+                        h,
+                        f"table:{table}",
+                        f'SELECT * FROM "{safe_table}" ORDER BY rowid',
+                    )
         return h.hexdigest()[:16]
-    except OSError:
-        try:
-            stat = os.stat(db_path)
-            return hashlib.sha256(
-                f"{stat.st_size}-{stat.st_mtime}-metadata-fallback".encode()
-            ).hexdigest()[:16]
-        except OSError:
-            return "unknown"
+    except (OSError, sqlite3.Error):
+        return "unknown"
 
 
 def _validate_existing_artifact(
@@ -273,7 +331,7 @@ def compute_all_factors(
     ).hexdigest()[:16]
 
     # DB fingerprint for manifest
-    db_fingerprint = _compute_db_fingerprint(db_path)
+    db_fingerprint = _compute_db_fingerprint(db_path, price_mode)
 
     # --- Integrity-safe resume ---
     # Only trust the existing final CSV if it passes validation against source data.
@@ -289,9 +347,29 @@ def compute_all_factors(
             expected_symbol_date_ranges=expected_symbol_date_ranges,
         )
         if not val_errors:
-            completed_symbols.update(valid_syms)
-            artifact_valid = True
-            print(f"Existing artifact validated: {len(valid_syms)} symbols trusted")
+            existing_manifest = {}
+            try:
+                with open(output_path + ".manifest.json", "r", encoding="utf-8") as fh:
+                    existing_manifest = json.load(fh)
+            except (OSError, json.JSONDecodeError):
+                pass
+            source_matches = (
+                existing_manifest.get("completed") is True
+                and existing_manifest.get("source_db_fingerprint") == db_fingerprint
+                and existing_manifest.get("price_mode") == price_mode
+            )
+            if source_matches:
+                completed_symbols.update(valid_syms)
+                artifact_valid = True
+                print(
+                    f"Existing artifact validated against current source: "
+                    f"{len(valid_syms)} symbols trusted"
+                )
+            else:
+                print(
+                    "Existing artifact structure is valid but its source "
+                    "fingerprint differs; rebuilding all symbols"
+                )
         else:
             print(f"Existing artifact FAILED validation ({len(val_errors)} issues):")
             for err in val_errors[:5]:
@@ -307,6 +385,10 @@ def compute_all_factors(
             print(f"Checkpoint adds {len(cp_symbols)} symbols (artifact-valid)")
         except Exception as e:
             print(f"Checkpoint read failed ({e}), ignoring checkpoint")
+
+    if artifact_valid and completed_symbols == set(all_symbols):
+        print("Existing factor artifact is complete and source-matched; rebuild skipped")
+        return None
 
     tmp_path = output_path + ".tmp"
     # Remove stale tmp from interrupted run

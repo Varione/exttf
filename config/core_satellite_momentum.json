@@ -1,0 +1,83 @@
+{
+  "strategy_name": "C1_CORE_SATELLITE_MOMENTUM",
+  "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "requested_oos_period": ["2021-01-04", "2026-07-27"],
+  "rule_scenario": "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO",
+  "historical_rule_status": "NOT_ESTABLISHED",
+  "parameter_search": "FORBIDDEN_ALL_PARAMETERS_FROZEN_ONCE",
+  "core_weights": {
+    "001512": 0.15,
+    "000148": 0.10,
+    "000218": 0.15,
+    "260102": 0.10
+  },
+  "satellite_budget": 0.50,
+  "satellite_pool": ["160706", "000008", "007466", "050021", "050025", "000071"],
+  "satellite_base_weight": 0.25,
+  "minimum_published_observations": 253,
+  "momentum": {
+    "short_total_return_days": 126,
+    "long_total_return_days": 252,
+    "score_short_weight": 0.5,
+    "score_long_weight": 0.5,
+    "trend_ma_days": 200,
+    "trend_condition": "TOTAL_RETURN_INDEX_GE_MA200",
+    "positive_condition": "MOMENTUM_SCORE_GT_ZERO"
+  },
+  "schedule": {
+    "observation_frequency": "quarter_end",
+    "submit": "next_trading_day",
+    "first_build_required": true
+  },
+  "selection": {
+    "top_n": 2,
+    "buffer_pct_points": 3.0,
+    "insufficient_top_n_budget_to": "260102"
+  },
+  "risk": {
+    "covariance_return_source": "daily_growth_pct_total_return",
+    "covariance_window_published_days": 60,
+    "volatility_target_pct": 10.0,
+    "satellite_scale_bounds": [0.0, 1.0],
+    "scale_method": "bisection",
+    "core_scaling": "FIXED_NO_SCALING",
+    "shortfall_destination": "260102"
+  },
+  "rebalance": {
+    "triggers": ["satellite_selection_set_changed", "natural_drift_deviation_ge_5pp"],
+    "natural_drift_source": "total_return_index_growth",
+    "drift_threshold_pct_points": 5.0,
+    "empty_signal_action": "NO_TRADE_KEEP_HOLDINGS"
+  },
+  "gate_thresholds": {
+    "net_cagr_min_pct": 8.0,
+    "sharpe_min": 0.90,
+    "mdd_min_pct_exclusive": -12.0,
+    "calmar_min": 0.70,
+    "relative_b2_cagr_advantage_min_pct_points": 2.0,
+    "worst_two_year_cagr_min_pct": 0.0,
+    "sustained_annual_confirmed_turnover_max_exclusive": 0.80,
+    "double_fee_net_cagr_min_pct": 8.0,
+    "double_fee_sharpe_min": 0.90,
+    "double_fee_mdd_min_pct_exclusive": -12.0,
+    "double_fee_calmar_min": 0.70,
+    "delay_cagr_decline_max_pct_points": 1.0,
+    "delay_mdd_min_pct_exclusive": -12.0,
+    "subperiod_net_cagr_positive": 0.0,
+    "subperiod_sharpe_min": 0.50
+  },
+  "stress_scenarios": {
+    "double_fees": {
+      "subscription_fee_multiplier": 2.0,
+      "redemption_fee_multiplier": 2.0
+    },
+    "delay_plus_one_trading_day": {
+      "subscription_confirmation_days_increment": 1,
+      "redemption_confirmation_days_increment": 1,
+      "redemption_arrival_days_increment": 1,
+      "rule_override_required_when_product_rule_hits": true
+    }
+  },
+  "benchmarks": ["B2_Static_EW_4Asset", "B2_LT_Static_EW_4Asset"]
+}

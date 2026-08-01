@@ -1,0 +1,90 @@
+{
+  "strategy_name": "C2_LOW_TURNOVER_CORE_SATELLITE",
+  "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "requested_oos_period": ["2021-01-04", "2026-07-27"],
+  "rule_scenario": "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO",
+  "historical_rule_status": "NOT_ESTABLISHED",
+  "publication_source_truth": "NOT_ESTABLISHED",
+  "conservative_timing_model_applied": true,
+  "parameter_search": "FORBIDDEN_ALL_PARAMETERS_FROZEN_ONCE",
+  "core_weights": {
+    "001512": 0.25,
+    "000148": 0.20,
+    "000218": 0.15,
+    "260102": 0.15
+  },
+  "satellite_budget": 0.25,
+  "satellite_pool": ["160706", "000008", "007466", "050021", "050025", "000071"],
+  "cross_border_qdii_codes": ["050025", "000071"],
+  "availability_lags": {
+    "domestic_following_china_trading_days": 1,
+    "cross_border_qdii_following_china_trading_days": 2
+  },
+  "minimum_available_observations": 253,
+  "momentum": {
+    "short_total_return_days": 126,
+    "long_total_return_days": 252,
+    "score_short_weight": 0.5,
+    "score_long_weight": 0.5,
+    "trend_ma_days": 200,
+    "trend_condition": "AVAILABLE_TOTAL_RETURN_INDEX_GE_MA200",
+    "positive_condition": "MOMENTUM_SCORE_GT_ZERO"
+  },
+  "schedule": {
+    "observation_months": [6, 12],
+    "observation_day": "LAST_AVAILABLE_CHINA_TRADING_DAY",
+    "submit": "NEXT_CHINA_TRADING_DAY",
+    "first_build_requires_core_history": true
+  },
+  "selection": {
+    "maximum_satellites": 3,
+    "retain_existing_while_eligible": true,
+    "sell_on_rank_change": false,
+    "slot_weight": 0.08333333333333333,
+    "unused_slot_destination": "260102"
+  },
+  "rebalance": {
+    "triggers": ["target_asset_set_changed", "natural_drift_deviation_ge_7_5pp"],
+    "natural_drift_source": "ASSUMED_AVAILABLE_TOTAL_RETURN_INDEX",
+    "drift_threshold_pct_points": 7.5,
+    "empty_signal_action": "NO_TRADE_KEEP_HOLDINGS",
+    "continuous_volatility_scaling": false,
+    "leverage": false
+  },
+  "gate_thresholds": {
+    "net_cagr_min_pct": 7.0,
+    "sharpe_min": 1.0,
+    "mdd_min_pct_exclusive": -10.0,
+    "calmar_min": 0.70,
+    "relative_b2_cagr_advantage_min_pct_points": 1.5,
+    "worst_two_year_cagr_min_pct": 0.0,
+    "sustained_annual_confirmed_turnover_max_exclusive": 0.8,
+    "double_fee_net_cagr_min_pct": 6.5,
+    "double_fee_sharpe_min": 0.9,
+    "double_fee_mdd_min_pct_exclusive": -11.0,
+    "double_fee_calmar_min": 0.6,
+    "delay_cagr_decline_max_pct_points": 0.75,
+    "delay_mdd_min_pct_exclusive": -11.0,
+    "subperiod_net_cagr_positive": 0.0,
+    "subperiod_sharpe_min": 0.5
+  },
+  "stress_scenarios": {
+    "double_fees": {
+      "subscription_fee_multiplier": 2.0,
+      "redemption_fee_multiplier": 2.0,
+      "actual_hit_rules_required": true
+    },
+    "delay_plus_one_trading_day": {
+      "subscription_confirmation_days_increment": 1,
+      "redemption_confirmation_days_increment": 1,
+      "redemption_arrival_days_increment": 1,
+      "actual_hit_rules_required": true
+    }
+  },
+  "benchmarks": {
+    "B2": "RERUN_SAME_INPUT_AND_EXECUTION",
+    "C1": "REFERENCE_FROZEN_RUN_WITH_HASH_VALIDATION",
+    "c1_run_id": "core_satellite_20260729_151927"
+  }
+}

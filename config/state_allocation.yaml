@@ -1,0 +1,103 @@
+# Asset Allocation Configuration
+# Maps market states to asset class budgets and exposure selection rules
+
+# Asset class definitions
+asset_classes:
+  domestic_equity:
+    sleeves: ["CSI300", "CSI500", "CSI1000", "CHINEXT", "DIVIDEND"]
+    max_sleeve_pct: 0.15
+    max_single_exposure_pct: 0.20
+    selection_method: equal_weight
+  overseas_equity:
+    sleeves: ["HANGSENG", "SP500", "NASDAQ"]
+    max_sleeve_pct: 0.10
+    max_single_exposure_pct: 0.12
+    selection_method: equal_weight
+  gold:
+    sleeves: ["GOLD"]
+    max_sleeve_pct: 0.30
+    max_single_exposure_pct: 0.30
+    selection_method: fixed  # always allocate full gold budget
+  bonds:
+    sleeves: ["GOV_BOND_3_5Y", "CREDIT_BOND", "ULTRA_SHORT_BOND"]
+    max_sleeve_pct: 0.20
+    max_single_exposure_pct: 0.20
+    selection_method: equal_weight
+  cash_mgt:
+    sleeves: ["MONEY_MARKET", "CD_NCD"]
+    max_sleeve_pct: 0.75
+    max_single_exposure_pct: 0.50
+    selection_method: equal_weight
+
+# Fixed representative products (for B1/B2/S1 before dynamic ProductSelector)
+fixed_products:
+  CSI300: "160706"
+  CSI500: "000008"
+  CSI1000: "016633"
+  CHINEXT: "050021"
+  DIVIDEND: "007466"
+  GOLD: "000218"
+  NASDAQ: "021778"
+  SP500: "050025"
+  HANGSENG: "000071"
+  MONEY_MARKET: "260102"
+  CD_NCD: "014430"
+  ULTRA_SHORT_BOND: "006663"
+  GOV_BOND_3_5Y: "001512"
+  CREDIT_BOND: "000148"
+
+# Market state -> budget ranges
+# Budget for {sleeve_group}: {min_pct, max_pct, default_pct}
+# All values as decimals (0.45 = 45%)
+state_budgets:
+  # Max class-weight delta between adjacent states <= 20%
+  # RISK_ON:     equity=45% (de=35%+oe=10%) gold=5%  bond=20% cash=30%
+  RISK_ON:
+    domestic_equity: {min: 0.30, max: 0.45, default: 0.35}
+    overseas_equity: {min: 0.08, max: 0.15, default: 0.10}
+    gold: {min: 0.03, max: 0.10, default: 0.05}
+    bonds: {min: 0.15, max: 0.25, default: 0.20}
+    cash_mgt: {min: 0.20, max: 0.35, default: 0.30}
+  NEUTRAL:
+    domestic_equity: {min: 0.22, max: 0.35, default: 0.28}
+    overseas_equity: {min: 0.05, max: 0.12, default: 0.08}
+    gold: {min: 0.05, max: 0.15, default: 0.10}
+    bonds: {min: 0.22, max: 0.35, default: 0.28}
+    cash_mgt: {min: 0.18, max: 0.32, default: 0.26}
+  INFLATION_REAL_ASSET:
+    domestic_equity: {min: 0.18, max: 0.32, default: 0.25}
+    overseas_equity: {min: 0.05, max: 0.10, default: 0.08}
+    gold: {min: 0.12, max: 0.25, default: 0.20}
+    bonds: {min: 0.18, max: 0.32, default: 0.25}
+    cash_mgt: {min: 0.15, max: 0.28, default: 0.22}
+  DEFLATION_RATE_DOWN:
+    domestic_equity: {min: 0.15, max: 0.28, default: 0.20}
+    overseas_equity: {min: 0.03, max: 0.08, default: 0.05}
+    gold: {min: 0.05, max: 0.15, default: 0.10}
+    bonds: {min: 0.28, max: 0.42, default: 0.35}
+    cash_mgt: {min: 0.22, max: 0.38, default: 0.30}
+  STRESS:
+    domestic_equity: {min: 0.12, max: 0.25, default: 0.20}
+    overseas_equity: {min: 0.03, max: 0.08, default: 0.06}
+    gold: {min: 0.05, max: 0.15, default: 0.08}
+    bonds: {min: 0.22, max: 0.38, default: 0.30}
+    cash_mgt: {min: 0.28, max: 0.45, default: 0.36}
+
+# Volatility target
+volatility_target:
+  target_pct: 0.09  # 9% target annualized vol
+  min_pct: 0.08
+  max_pct: 0.10
+  use_leverage: false
+  vol_lookback_days: 60
+
+# Theme/sector total limit
+theme_limit_pct: 0.10
+
+# Selection parameters
+selection:
+  momentum_lookback: 120
+  top_n_domestic: 3  # pick top 3 domestic equity sleeves
+  top_n_overseas: 2  # pick top 2 overseas equity sleeves
+  rebalance_frequency_days: 30
+  min_weight_change_pct: 0.03  # 3% minimum trade to avoid churn

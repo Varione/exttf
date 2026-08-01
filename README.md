@@ -12,6 +12,30 @@ D:\miniconda\envs\agents\python.exe
 
 当前验证环境为 Python 3.12.13。不要使用系统 Python 运行正式测试或实验。
 
+### 冻结依赖
+
+```text
+pandas==3.0.3
+numpy==2.3.5
+scikit-learn==1.9.0
+scipy==1.18.0
+torch==2.13.0+cu126
+matplotlib==3.11.0
+akshare==1.18.79
+pytest==9.1.1
+requests==2.34.2
+stable-baselines3==NOT_INSTALLED（可选，RL 策略依赖）
+gymnasium==NOT_INSTALLED（可选，RL 环境依赖）
+```
+
+在新环境中安装依赖：
+
+```powershell
+pip install pandas==3.0.3 numpy==2.3.5 scikit-learn==1.9.0 scipy==1.18.0
+pip install torch==2.13.0+cu126 --index-url https://download.pytorch.org/whl/cu126
+pip install matplotlib==3.11.0 akshare==1.18.79 pytest==9.1.1 requests==2.34.2
+```
+
 ## 正式入口
 
 | 模块 | 文件 |
@@ -76,11 +100,13 @@ ETF 生命周期状态目前是 `PIT_PARTIAL`。场外数据来源为 AkShare / 
 & 'D:\miniconda\envs\agents\python.exe' -m pytest -q -W error::FutureWarning
 ```
 
-2026-07-28 审计基线：
+2026-08-01 全量回归基线（唯一状态源见 `reports/latest_research_status.json` 与 `reports/test_regression/regression_20260801_113005.json`）：
 
 ```text
-230 passed
+557 passed, 0 failed, 0 errors, 0 warnings (37 个测试文件)
 ```
+
+历史测试记录（230/401/416/426 passed 等）仅用于追溯，不再作为当前测试结论。
 
 ## 运行统一实验
 

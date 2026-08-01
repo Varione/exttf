@@ -17,7 +17,7 @@ from otf_backtest_engine import OTFBacktestEngine
 
 ETF_DB = "data/processed/etf.sqlite"
 OTF_DB = "data/processed/otf_mapped.sqlite"
-OTF_RESEARCH_DB = "data/processed/otf_research.sqlite"
+OTF_RESEARCH_DB = "data/processed/otf_expanded.sqlite"
 REPORT_DIR = Path("reports/mapped_otf_strategy")
 
 

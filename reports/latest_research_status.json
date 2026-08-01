@@ -1,0 +1,273 @@
+{
+  "run_id": "walkforward_20260731_082713",
+  "status": "OOS_GATE_FAILED",
+  "timestamp": "2026-08-01T11:50:00.000000+00:00",
+  "completed_phases": [
+    "ARTIFACT_EXPORT",
+    "ASSET_BUDGET_KEY_SPACE_FIXED",
+    "C3_REFINALIZED_WITH_CURRENT_VALIDATOR",
+    "EXECUTION_CALENDAR_REBUILT",
+    "FROZEN_PARAMETER_CONTINUOUS_OOS",
+    "FULL_GATE_IMPLEMENTATION",
+    "FULL_REGRESSION_RECORDED_20260801",
+    "STEADY_STATE_TURNOVER_METRIC",
+    "STRATEGY_ATTRIBUTION_COMPLETE",
+    "TRUTH_SOURCE_FACTS",
+    "VOL_SCALE_CASH_FIX"
+  ],
+  "failed_phases": [],
+  "test_result": {
+    "record": "reports/test_regression/regression_20260801_113005.json",
+    "passed": 557,
+    "failed": 0,
+    "errors": 0,
+    "warnings": 0,
+    "all_passed": true,
+    "python_version": "3.12.13",
+    "git_commit": "32ebbcadb1467a48b5772270680aa9853be7f4ec",
+    "git_dirty": true,
+    "test_file_count": 37,
+    "total_elapsed_seconds": 874.79
+  },
+  "git": {
+    "commit": "32ebbcadb1467a48b5772270680aa9853be7f4ec",
+    "dirty": true,
+    "branch": ""
+  },
+  "input_hashes": {
+    "db_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+    "rules_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
+    "mapping_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
+    "config_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
+    "calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7"
+  },
+  "rule_counts_by_status": {
+    "CONSERVATIVE_ASSUMPTION": 20,
+    "DISTRIBUTOR_VERIFIED": 31,
+    "OFFICIAL_VERIFIED": 3,
+    "PRODUCT_TYPE_ASSUMPTION": 1
+  },
+  "rule_temporal_coverage": {
+    "effective_from_present": 0,
+    "verified_at_present": 0,
+    "total_rules": 55
+  },
+  "mapping_counts_by_status": {
+    "mapping_confidence:HIGH": 31,
+    "review_status:APPROVED": 31
+  },
+  "execution_calendar": {
+    "path": "data/processed/execution_calendar/cn_execution_calendar.csv",
+    "sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+    "source": "ETF_DAILY_DISTINCT_DATE_PLUS_4_OF_4_DOMESTIC_EQUITY_NAV_CONSENSUS",
+    "consensus_count": 4,
+    "coverage": {
+      "min_date": "2005-02-23",
+      "max_date": "2026-07-27",
+      "count": 5207
+    },
+    "fix_status": "REBUILT_20260730_FROM_ETF_DATES_PLUS_4OF4_CONSENSUS"
+  },
+  "strategies_executed": [
+    "B1_Static_60_20_20",
+    "B2_Static_EW_4Asset",
+    "B3_Rolling_Risk_Parity",
+    "S1_State_Rotation_Fixed"
+  ],
+  "oos_period": "2021-01-04~2026-07-27",
+  "requested_oos_period": "2021-01-04~2026-07-31",
+  "actual_oos_period": "2021-01-04~2026-07-27",
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "rule_scenario": "CONSERVATIVE_STANDARD",
+  "historical_rule_status": "CURRENT_SNAPSHOT_ONLY",
+  "historical_truth_gate": false,
+  "parameter_freeze_id": "WALKFORWARD_20260731",
+  "annual_restart_sensitivity_status": "SKIPPED",
+  "strategy_research_status": {
+    "B1_Static_60_20_20": {
+      "role": "history_infrastructure_regression_baseline",
+      "gate_passed": false,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    },
+    "B2_Static_EW_4Asset": {
+      "role": "best_static_baseline_control",
+      "gate_passed": true,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    },
+    "B3_Rolling_Risk_Parity": {
+      "role": "history_infrastructure_regression_baseline",
+      "gate_passed": true,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    },
+    "S1_State_Rotation_Fixed": {
+      "role": "stopped_research_line",
+      "gate_passed": false,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false,
+      "stop_reason": "STOP_STATE_ROTATION relative_benchmark CAGR advantage -0.64pp < +0.75pp"
+    },
+    "C1_Core_Satellite_Momentum": {
+      "role": "high_return_high_turnover_diagnostic_control",
+      "gate_passed": false,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    },
+    "C2_Low_Turnover_Core_Satellite": {
+      "role": "archived_failed_research_line",
+      "gate_passed": false,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    },
+    "C3_Low_Turnover_Momentum": {
+      "role": "frozen_observation_control_not_candidate",
+      "gate_passed": false,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false,
+      "artifact_validation_passed": true
+    },
+    "M20_Mapped_Fund_Trend": {
+      "role": "retrospective_observation_line",
+      "gate_passed": false,
+      "research_label": "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    },
+    "ML_RL": {
+      "role": "deferred_research_line",
+      "gate_passed": false,
+      "research_label": "DEFERRED",
+      "historical_truth": false,
+      "sample_label": "REUSED_RESEARCH_SAMPLE_NOT_FRESH_OOS",
+      "forward_observation_eligible": false
+    }
+  },
+  "run_registry": {
+    "B2LT": {
+      "run_id": "core_satellite_20260730_124538",
+      "bundle": "B2_LT_Static_EW_4Asset",
+      "metrics_sha256": "67625410796a4ff12fa866e3786ba4fda4172758b09f1f7587bf7334f6ce9073",
+      "net_cagr_pct": 5.9075,
+      "sharpe": 0.9008,
+      "mdd_pct": -10.0238
+    },
+    "C1": {
+      "run_id": "core_satellite_20260730_124538",
+      "gate_passed": false
+    },
+    "C2": {
+      "run_id": "low_turnover_core_satellite_20260730_125734",
+      "gate_passed": false
+    },
+    "C3": {
+      "run_id": "c3_low_turnover_momentum_20260730_161845",
+      "gate_passed": false,
+      "artifact_validation_passed": true,
+      "artifact_validation_final_passed": true
+    },
+    "M20": {
+      "run_id": "otf_walkforward_manifest_20260728"
+    },
+    "B1_B2_B3_S1": {
+      "run_id": "walkforward_20260731_082713",
+      "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS"
+    }
+  },
+  "attribution": {
+    "run_id": "phase_a_calendar_final_20260730_212320",
+    "state": "COMPLETE",
+    "scope": "explanatory_attribution_of_existing_frozen_runs",
+    "strategies": [
+      "B2",
+      "B2LT",
+      "C1",
+      "C2"
+    ],
+    "reconciliation": {
+      "all_rows": 1347,
+      "residual_max_abs": 6.254735377049415e-05,
+      "passed": true
+    },
+    "not_new_oos": true,
+    "not_candidate_selection": true
+  },
+  "superseded_runs": {
+    "walkforward_20260729_122541": "superseded_by_20260731_082713",
+    "walkforward_20260729_120701": "superseded_by_20260731_082713",
+    "walkforward_20260729_114818": "superseded_by_20260731_082713",
+    "core_satellite_20260729_151927": "superseded_by_20260730_124538",
+    "core_satellite_20260730_114756": "superseded_by_20260730_124538",
+    "low_turnover_core_satellite_20260729_163519": "superseded_by_20260730_125734",
+    "low_turnover_core_satellite_20260730_115448": "superseded_by_20260730_125734",
+    "c3_low_turnover_momentum_20260730_161131": "superseded_by_20260730_161845_refinalized_20260801"
+  },
+  "gate_result": {
+    "B1_Static_60_20_20": {
+      "gate_passed": false,
+      "failed_checks": [
+        "sharpe",
+        "mdd",
+        "rolling_two_year_positive_ratio",
+        "worst_two_year_cagr"
+      ]
+    },
+    "B2_Static_EW_4Asset": {
+      "gate_passed": true,
+      "failed_checks": []
+    },
+    "B3_Rolling_Risk_Parity": {
+      "gate_passed": true,
+      "failed_checks": []
+    },
+    "S1_State_Rotation_Fixed": {
+      "gate_passed": false,
+      "failed_checks": [
+        "relative_benchmark"
+      ],
+      "relative_benchmark_gate": {
+        "cagr_advantage_pp": -0.6447000000000003,
+        "sharpe_advantage": -0.00539999999999996,
+        "relative_check_passed": false
+      }
+    }
+  },
+  "blocking_issues": [
+    "S1 relative_benchmark gate failed: CAGR advantage -0.64pp vs B2 (need +0.75pp)",
+    "B1 absolute gate failed: sharpe 0.36 < 0.50, mdd -21.8% < -15%",
+    "Rule temporal coverage incomplete: effective_from/verified_at fields empty for all 55 rules",
+    "Git worktree dirty: 40+ root-level one-off scripts not yet migrated; clean commit required before freeze rerun",
+    "C3 sustained_confirmed_turnover gate failed (max 1.22 > 0.8) and double-fee gates failed; C3 stays frozen observation only"
+  ],
+  "finalization": {
+    "decision": "STOP_STATE_ROTATION",
+    "best_static_baseline": "B2_Static_EW_4Asset",
+    "b2_metrics": {
+      "net_cagr_pct": 5.13,
+      "sharpe": 0.815,
+      "mdd_pct": -8.71
+    },
+    "b2lt_metrics": {
+      "net_cagr_pct": 5.9075,
+      "sharpe": 0.9008,
+      "mdd_pct": -10.0238
+    },
+    "forward_observation": "NOT_STARTED_T0_NOT_REGISTERED"
+  }
+}

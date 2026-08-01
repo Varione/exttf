@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import sqlite3
 import uuid
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -28,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from otf_trading_rules import ProductRuleBook
+from otf_rotation.execution_calendar import ExecutionCalendar
 
 
 class OrderSide(str, Enum):
@@ -129,6 +131,8 @@ class OTFBacktestEngine:
         fund_redemption_fee_rates: dict[str, float] | None = None,
         product_rule_book: ProductRuleBook | None = None,
         strict_product_rules: bool = False,
+        channel: str = "ALL",
+        execution_calendar: ExecutionCalendar | None = None,
     ):
         self.db_path = db_path
         self.confirmation_days_subscribe = confirmation_days_subscribe
@@ -160,6 +164,11 @@ class OTFBacktestEngine:
         self.reinvest_distributions = bool(reinvest_distributions)
         self.product_rule_book = product_rule_book
         self.strict_product_rules = bool(strict_product_rules)
+        self.channel = channel
+        self.execution_calendar = execution_calendar
+        if execution_calendar is not None and not isinstance(execution_calendar, ExecutionCalendar):
+            raise ValueError("execution_calendar must be an ExecutionCalendar instance")
+
         self._rejection_log: list[dict[str, Any]] = []
         if not self.reinvest_distributions:
             raise ValueError(
@@ -291,9 +300,19 @@ class OTFBacktestEngine:
         self._catalog_df["termination_date"] = pd.to_datetime(
             self._catalog_df["termination_date"], errors="coerce"
         )
+        self._fund_termination_dates: dict[str, pd.Timestamp | None] = {}
+        for _, row in self._catalog_df.iterrows():
+            td = row.get("termination_date")
+            self._fund_termination_dates[row["fund_code"]] = (
+                pd.Timestamp(td) if pd.notna(td) and td != "" else None
+            )
 
-        all_dates = self._nav_df["nav_date"].drop_duplicates().sort_values()
-        self._trading_dates = pd.DatetimeIndex(all_dates)
+        all_nav_dates = self._nav_df["nav_date"].drop_duplicates().sort_values()
+        self._valuation_source_dates = pd.DatetimeIndex(all_nav_dates)
+        if self.execution_calendar is not None:
+            self._trading_dates = pd.DatetimeIndex(self.execution_calendar.dates)
+        else:
+            self._trading_dates = pd.DatetimeIndex(all_nav_dates)
         self._date_to_index = {
             date: idx for idx, date in enumerate(self._trading_dates)
         }
@@ -307,7 +326,10 @@ class OTFBacktestEngine:
         self._share_adjustment_lookup = {}
         for fund_code in nav_pivot.index:
             series = nav_pivot.loc[fund_code]
-            valuation_series = series.reindex(self._trading_dates).ffill()
+            # Use all valuation source dates for ffill so QDII NAV changes on
+            # non-execution dates are captured, then reindex to execution dates.
+            full_series = series.reindex(self._valuation_source_dates).ffill()
+            valuation_series = full_series.reindex(self._trading_dates)
             for idx, date in enumerate(self._trading_dates):
                 if date in series.index and not np.isnan(series[date]):
                     self._nav_lookup[(fund_code, idx)] = float(series[date])
@@ -317,15 +339,39 @@ class OTFBacktestEngine:
                         valuation_nav
                     )
 
-        for row in self._nav_df.itertuples(index=False):
-            date_idx = self._date_to_index.get(row.nav_date)
-            if date_idx is not None and pd.notna(row.distribution_per_share):
-                self._distribution_lookup[(row.fund_code, date_idx)] = max(
-                    0.0, float(row.distribution_per_share)
+        # Aggregate adjustment factors and distributions across holiday gaps.
+        # For each fund, for each source NAV row, map to the first execution date
+        # >= that source date (searchsorted left).  All factors mapping to the same
+        # (fund, exec_idx) are multiplied together.  This does NOT depend on the
+        # fund having a raw NAV row on the target execution date.
+        from collections import defaultdict
+        # Use dict with explicit product tracking; start at 1.0 for multiplication identity.
+        adj_agg: dict[tuple[str, int], float] = {}
+        dist_agg: dict[tuple[str, int], float] = defaultdict(float)
+        for _, row in self._nav_df.iterrows():
+            source_date = pd.Timestamp(row.nav_date)
+            # First execution date >= source_date
+            pos = self._trading_dates.searchsorted(source_date, side="left")
+            if pos >= len(self._trading_dates):
+                continue  # source after last execution date; ignore
+            exec_idx = pos
+            adj = float(row.share_adjustment_factor) if pd.notna(row.share_adjustment_factor) else 1.0
+            dist = float(row.distribution_per_share) if pd.notna(row.distribution_per_share) else 0.0
+            key = (row.fund_code, exec_idx)
+            if adj != 1.0:
+                adj_agg[key] = adj if key not in adj_agg else adj_agg[key] * adj
+            if dist > 0.0:
+                dist_agg[key] += dist
+        # Write aggregated factors into lookup tables
+        for key, product in adj_agg.items():
+            if product != 1.0:
+                self._share_adjustment_lookup[key] = (
+                    self._share_adjustment_lookup.get(key, 1.0) * product
                 )
-            if date_idx is not None and pd.notna(row.share_adjustment_factor):
-                self._share_adjustment_lookup[(row.fund_code, date_idx)] = float(
-                    row.share_adjustment_factor
+        for key, total in dist_agg.items():
+            if total > 1e-12:
+                self._distribution_lookup[key] = (
+                    self._distribution_lookup.get(key, 0.0) + total
                 )
 
         qdii_keywords = ["QDII", "qdii", "纳斯达克", "标普", "海外"]
@@ -458,6 +504,13 @@ class OTFBacktestEngine:
         )
         return rule.minimum_holding_calendar_days if rule else 0
 
+    def is_terminated(self, fund_code: str, date: pd.Timestamp) -> bool:
+        """Check if a fund is terminated (delisted/closed) on or before date."""
+        td = self._fund_termination_dates.get(fund_code)
+        if td is None:
+            return False
+        return date >= td
+
     def get_order_constraints(
         self, fund_code: str, submit_date: pd.Timestamp
     ) -> tuple[bool, bool, float | None, str]:
@@ -530,18 +583,26 @@ class OTFBacktestEngine:
         """
         submit_idx = self._date_to_index.get(submit_date)
         if submit_idx is None:
+            if self.execution_calendar is not None:
+                raise RuntimeError(f"OTF_NOT_EXECUTION_DATE:{submit_date.date()}")
             return None
-        if (
-            self.strict_product_rules
-            and (
-                self.product_rule_book is None
-                or self.product_rule_book.rule_for(fund_code) is None
+        if self.strict_product_rules and self.product_rule_book is not None:
+            allowed, reason = self.product_rule_book.is_rule_allowed(
+                fund_code, submit_date=submit_date, channel=self.channel
             )
-        ):
-            raise RuntimeError(f"MISSING_PRODUCT_RULE:{fund_code}")
+            if not allowed:
+                self._record_rejection(
+                    fund_code, side, submit_date, f"RULE_BLOCKED:{reason}"
+                )
+                return None
 
         nav_at_submit = self.get_nav(fund_code, submit_idx)
         if nav_at_submit is None or nav_at_submit <= 0:
+            return None
+        if self.is_terminated(fund_code, submit_date):
+            self._record_rejection(
+                fund_code, side, submit_date, "FUND_TERMINATED"
+            )
             return None
         sub_open, red_open, subscription_limit, restriction_reason = (
             self.get_order_constraints(fund_code, submit_date)
@@ -745,6 +806,16 @@ class OTFBacktestEngine:
             raise ValueError("Target weights exceed 100%")
         target_weights = numeric_targets
 
+        # Validate that any date with non-NaN targets is an execution date.
+        if self.execution_calendar is not None and not target_weights.empty:
+            exec_set = set(self._trading_dates)
+            bad_dates = []
+            for idx_date in target_weights.index:
+                if idx_date not in exec_set and target_weights.loc[idx_date].notna().any():
+                    bad_dates.append(idx_date.strftime("%Y-%m-%d"))
+            if bad_dates:
+                raise RuntimeError(f"OTF_TARGET_NOT_EXECUTION_DATE:{','.join(sorted(bad_dates))}")
+
         if start is None:
             start = self._trading_dates[0].strftime("%Y-%m-%d")
         if end is None:
@@ -769,12 +840,15 @@ class OTFBacktestEngine:
         prior_end_equity = float(self.initial_cash)
         deferred_subscriptions: dict[str, float] = {}
         deferred_signal_date: pd.Timestamp | None = None
+        current_target: dict[str, float] = {}
         self._rejection_log = []
 
         for date in test_dates:
             full_idx = self._date_to_index[date]
             signal_date = pd.NaT
             total_fees = 0.0
+            subscription_fee_amount = 0.0
+            redemption_fee_amount = 0.0
 
             # Apply the source-implied share multiplier.  This handles cash
             # distributions, reinvestment and share conversions while making
@@ -796,6 +870,7 @@ class OTFBacktestEngine:
                         continue
                     total_fees += order.fee_paid
                     if order.side == OrderSide.SUBSCRIBE:
+                        subscription_fee_amount += order.fee_paid
                         frozen_cash -= order.cash_frozen
                         positions[order.fund_code] = (
                             positions.get(order.fund_code, 0.0)
@@ -811,6 +886,7 @@ class OTFBacktestEngine:
                         self.settle_order(order, full_idx)
                         pending_orders.remove(order)
                     else:
+                        redemption_fee_amount += order.fee_paid
                         shares = order.shares_confirmed or 0.0
                         if order.lot_allocations:
                             lots_by_id = {
@@ -921,6 +997,7 @@ class OTFBacktestEngine:
                     for code, weight in weights_row.items()
                     if pd.notna(weight) and float(weight) > 1e-12
                 }
+                current_target = dict(target)
                 signal_date = (
                     signal_dates.get(date, date)
                     if signal_dates is not None
@@ -1031,11 +1108,36 @@ class OTFBacktestEngine:
                 for code, shares in positions.items()
             )
             exposure = exposure_value / end_equity if end_equity > 0 else 0.0
+            actual_weights = {
+                code: (
+                    shares * (self.get_valuation_nav(code, full_idx) or 0.0)
+                    / end_equity
+                )
+                for code, shares in positions.items()
+                if end_equity > 0
+            }
+            lot_snapshot = [
+                {
+                    "fund_code": fund_code,
+                    "lot_id": lot.lot_id,
+                    "acquired_date": lot.acquired_date,
+                    "shares": lot.shares,
+                    "reserved_shares": lot.reserved_shares,
+                }
+                for fund_code, lots in position_lots.items()
+                for lot in lots
+            ]
             rows.append(
                 self._make_row(
                     date, signal_date, available_cash, frozen_cash,
                     receivable_cash, positions, daily_return, gross_return,
                     cost_return, end_equity, len(pending_orders), exposure,
+                    subscription_fee_amount=subscription_fee_amount,
+                    redemption_fee_amount=redemption_fee_amount,
+                    total_fee_amount=total_fees,
+                    target_weights=current_target,
+                    actual_weights=actual_weights,
+                    position_lots=lot_snapshot,
                 )
             )
             prior_end_equity = end_equity
@@ -1075,6 +1177,26 @@ class OTFBacktestEngine:
                     "cash_frozen": order.cash_frozen,
                     "confirmed_nav": order.confirmed_nav,
                     "shares_confirmed": order.shares_confirmed,
+                    "filled_notional": (
+                        float(order.shares_confirmed or 0.0)
+                        * float(order.confirmed_nav or 0.0)
+                        if order.status in {OrderStatus.CONFIRMED, OrderStatus.SETTLED}
+                        else 0.0
+                    ),
+                    "settled_cash_notional": (
+                        (
+                            float(order.requested_amount or 0.0)
+                            + float(order.fee_paid or 0.0)
+                        )
+                        if order.side == OrderSide.SUBSCRIBE
+                        and order.status == OrderStatus.SETTLED
+                        else (
+                            float(order.cash_released or 0.0)
+                            if order.side == OrderSide.REDEEM
+                            and order.status == OrderStatus.SETTLED
+                            else 0.0
+                        )
+                    ),
                     "fee_paid": order.fee_paid,
                     "effective_fee_rate": order.effective_fee_rate,
                     "fifo_lot_count": len(order.lot_allocations),
@@ -1112,6 +1234,12 @@ class OTFBacktestEngine:
         equity: float,
         pending_order_count: int,
         exposure: float = 0.0,
+        subscription_fee_amount: float = 0.0,
+        redemption_fee_amount: float = 0.0,
+        total_fee_amount: float = 0.0,
+        target_weights: dict[str, float] | None = None,
+        actual_weights: dict[str, float] | None = None,
+        position_lots: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         return {
             "date": date,
@@ -1123,10 +1251,26 @@ class OTFBacktestEngine:
             "daily_return": daily_return,
             "gross_return": gross_return,
             "transaction_cost": transaction_cost,
+            # Preserve the order-level fee precision so the daily account,
+            # fees.csv and order audit reconcile in aggregate. Display-only
+            # cash/equity fields remain rounded below, but accounting fees
+            # must not accumulate independent per-day cent-rounding drift.
+            "subscription_fee_amount": subscription_fee_amount,
+            "redemption_fee_amount": redemption_fee_amount,
+            "total_fee_amount": total_fee_amount,
             "position_count": len(positions),
             "pending_order_count": pending_order_count,
             "exposure": exposure,
             "positions": str(sorted(positions.keys())),
+            "target_weights": json.dumps(
+                target_weights or {}, ensure_ascii=False, sort_keys=True
+            ),
+            "actual_weights": json.dumps(
+                actual_weights or {}, ensure_ascii=False, sort_keys=True
+            ),
+            "position_lots": json.dumps(
+                position_lots or [], ensure_ascii=False, default=str
+            ),
         }
 
     def calculate_metrics(

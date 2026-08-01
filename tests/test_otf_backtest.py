@@ -809,11 +809,14 @@ class TestProductLevelExecution:
             strict_product_rules=True,
         )
         date = engine._trading_dates[0]
-        with pytest.raises(RuntimeError, match="MISSING_PRODUCT_RULE:F001"):
-            engine.submit_order(
-                "missing", OrderSide.SUBSCRIBE, "F001", date, date,
-                100.0, 1000.0, {},
-            )
+        result = engine.submit_order(
+            "missing", OrderSide.SUBSCRIBE, "F001", date, date,
+            100.0, 1000.0, {},
+        )
+        assert result is None
+        rejections = getattr(engine, "_rejection_log", [])
+        assert len(rejections) > 0
+        assert any("RULE_BLOCKED" in r.get("reason", "") for r in rejections)
 
 
 class TestProductionData:
@@ -881,3 +884,219 @@ class TestNetReturnIdentity:
             atol=1e-10,
             err_msg="Net return identity violated",
         )
+
+
+class TestForcedExitAndTermination:
+    """Verify terminated funds are blocked from trading."""
+
+    def test_terminated_fund_rejected_at_submit(self, test_db):
+        conn = sqlite3.connect(test_db)
+        conn.execute(
+            "UPDATE otf_fund_catalog SET termination_date = '2024-01-05' WHERE fund_code = 'F001'"
+        )
+        conn.commit()
+        conn.close()
+        engine = OTFBacktestEngine(test_db)
+        date = engine._trading_dates[8]
+        assert date >= pd.Timestamp("2024-01-05")
+        order = engine.submit_order(
+            "term-sub", OrderSide.SUBSCRIBE, "F001", date, date,
+            10000.0, 100000.0, {},
+        )
+        assert order is None
+        assert engine._rejection_log[-1]["reason"] == "FUND_TERMINATED"
+
+    def test_terminated_fund_cannot_be_in_target(self, test_db):
+        conn = sqlite3.connect(test_db)
+        conn.execute(
+            "UPDATE otf_fund_catalog SET termination_date = '2024-01-05' WHERE fund_code = 'F001'"
+        )
+        conn.commit()
+        conn.close()
+        engine = OTFBacktestEngine(test_db)
+        dates = engine._trading_dates[5:15]
+        bad_targets = pd.DataFrame(
+            {"F001": [1.0, 0.0]}, index=[dates[0], dates[5]]
+        )
+        engine.run_backtest(bad_targets, str(dates[0].date()), str(dates[-1].date()), 1)
+        rejections = engine._rejection_log
+        term_rejections = [r for r in rejections if r["reason"] == "FUND_TERMINATED"]
+        assert term_rejections, "Terminated fund must be rejected"
+
+    def test_no_termination_date_passes(self, clean_engine):
+        """Fund without termination date can be traded normally."""
+        fund = clean_engine.available_fund_codes[0]
+        date = clean_engine._trading_dates[0]
+        order = clean_engine.submit_order(
+            "normal", OrderSide.SUBSCRIBE, fund, date, date,
+            10000.0, 100000.0, {},
+        )
+        assert order is not None
+
+
+class TestSubscriptionLimitEvents:
+    """Verify subscription limit enforcement via trading restriction events."""
+
+    def test_limit_during_rebalance(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        lim_date = engine._trading_dates[5]
+        event = TradingRestrictionEvent(
+            code, lim_date, lim_date, True, True, 500.0,
+            "daily limit", "test",
+        )
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 1)},
+            events={code: [event]},
+        )
+        order = engine.submit_order(
+            "limit-sub", OrderSide.SUBSCRIBE, code, lim_date, lim_date,
+            10000.0, 100000.0, {},
+        )
+        assert order is None
+        assert engine._rejection_log[-1]["reason"] == "SUBSCRIPTION_LIMIT_EXCEEDED"
+
+    def test_limit_does_not_block_below_threshold(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        lim_date = engine._trading_dates[5]
+        event = TradingRestrictionEvent(
+            code, lim_date, lim_date, True, True, 5000.0,
+            "daily limit", "test",
+        )
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 1)},
+            events={code: [event]},
+        )
+        order = engine.submit_order(
+            "limit-small", OrderSide.SUBSCRIBE, code, lim_date, lim_date,
+            1000.0, 100000.0, {},
+        )
+        assert order is not None
+
+    def test_multiple_events_overlap(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        start_date = engine._trading_dates[5]
+        mid_date = engine._trading_dates[7]
+        end_date = engine._trading_dates[10]
+        event1 = TradingRestrictionEvent(
+            code, start_date, mid_date, False, True, None,
+            "suspension period 1", "test",
+        )
+        event2 = TradingRestrictionEvent(
+            code, mid_date, end_date, True, True, 2000.0,
+            "limited reopening", "test",
+        )
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 1)},
+            events={code: [event1, event2]},
+        )
+        order1 = engine.submit_order(
+            "during-suspension", OrderSide.SUBSCRIBE, code, start_date, start_date,
+            1000.0, 100000.0, {},
+        )
+        assert order1 is None
+        assert "suspension" in engine._rejection_log[-1]["reason"]
+        order2 = engine.submit_order(
+            "during-limit", OrderSide.SUBSCRIBE, code, end_date, end_date,
+            5000.0, 100000.0, {},
+        )
+        assert order2 is None
+        assert engine._rejection_log[-1]["reason"] == "SUBSCRIPTION_LIMIT_EXCEEDED"
+
+
+class TestHoldingPeriodRedemptionFee:
+    """Verify holding-period-based redemption fee tiers."""
+
+    def test_short_holding_pays_higher_fee(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 3)},
+            fee_tiers={
+                code: [
+                    RedemptionFeeTier(0, 7, 0.015),
+                    RedemptionFeeTier(7, 30, 0.005),
+                    RedemptionFeeTier(30, None, 0.0),
+                ]
+            },
+        )
+        submit_idx = 10
+        submit_date = engine._trading_dates[submit_idx]
+        nav = engine.get_nav(code, submit_idx)
+        lots = {
+            code: [
+                PositionLot("young", submit_date - pd.Timedelta(days=3), 200.0),
+            ]
+        }
+        order = engine.submit_order(
+            "short-hold", OrderSide.REDEEM, code, submit_date, submit_date,
+            100.0 * nav, 0.0, {code: 200.0}, position_lots=lots,
+        )
+        assert order is not None
+        engine.confirm_order(order, submit_idx + 1)
+        expected = 100.0 * engine.get_nav(code, submit_idx + 1) * 0.015
+        assert order.fee_paid == pytest.approx(expected, abs=0.001)
+
+    def test_long_holding_pays_lower_fee(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 3)},
+            fee_tiers={
+                code: [
+                    RedemptionFeeTier(0, 7, 0.015),
+                    RedemptionFeeTier(7, 30, 0.005),
+                    RedemptionFeeTier(30, None, 0.0),
+                ]
+            },
+        )
+        submit_idx = 10
+        submit_date = engine._trading_dates[submit_idx]
+        nav = engine.get_nav(code, submit_idx)
+        lots = {
+            code: [
+                PositionLot("old", submit_date - pd.Timedelta(days=40), 200.0),
+            ]
+        }
+        order = engine.submit_order(
+            "long-hold", OrderSide.REDEEM, code, submit_date, submit_date,
+            100.0 * nav, 0.0, {code: 200.0}, position_lots=lots,
+        )
+        assert order is not None
+        engine.confirm_order(order, submit_idx + 1)
+        expected = 100.0 * engine.get_nav(code, submit_idx + 1) * 0.0
+        assert order.fee_paid == pytest.approx(expected, abs=0.001)
+
+    def test_mixed_lots_use_correct_tier_per_lot(self, clean_engine):
+        engine = clean_engine
+        code = "F001"
+        engine.product_rule_book = ProductRuleBook(
+            rules={code: FundTradingRule(code, 0.0, 1, 1, 3)},
+            fee_tiers={
+                code: [
+                    RedemptionFeeTier(0, 7, 0.015),
+                    RedemptionFeeTier(7, None, 0.0),
+                ]
+            },
+        )
+        submit_idx = 10
+        submit_date = engine._trading_dates[submit_idx]
+        nav = engine.get_nav(code, submit_idx)
+        lots = {
+            code: [
+                PositionLot("old", submit_date - pd.Timedelta(days=10), 100.0),
+                PositionLot("young", submit_date - pd.Timedelta(days=3), 100.0),
+            ]
+        }
+        order = engine.submit_order(
+            "mixed", OrderSide.REDEEM, code, submit_date, submit_date,
+            150.0 * nav, 0.0, {code: 200.0}, position_lots=lots,
+        )
+        assert order is not None
+        engine.confirm_order(order, submit_idx + 1)
+        confirm_nav = engine.get_nav(code, submit_idx + 1)
+        old_fee = 100.0 * confirm_nav * 0.0  # >7 days
+        young_fee = 50.0 * confirm_nav * 0.015  # <7 days
+        assert order.fee_paid == pytest.approx(old_fee + young_fee, abs=0.001)

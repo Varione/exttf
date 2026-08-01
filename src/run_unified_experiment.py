@@ -18,6 +18,8 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from otf_rotation.research_status import write_status as write_research_status
+
 logger = logging.getLogger("unified_experiment")
 
 
@@ -469,7 +471,9 @@ class FactorBuilder:
             errors.append("MANIFEST_NOT_COMPLETED")
 
         from factor_engine import _compute_db_fingerprint
-        current_db_fingerprint = _compute_db_fingerprint(self.db_path)
+        current_db_fingerprint = _compute_db_fingerprint(
+            self.db_path, self.price_mode
+        )
         manifest_db_fingerprint = manifest.get(
             "source_db_fingerprint", manifest.get("db_fingerprint")
         )
@@ -506,7 +510,9 @@ class FactorBuilder:
                 logger.error(f"Factor validation: {e}")
             return False
 
-        db_fingerprint = _compute_db_fingerprint(self.db_path)
+        db_fingerprint = _compute_db_fingerprint(
+            self.db_path, self.price_mode
+        )
         logger.info(
             f"Factor validation PASSED: "
             f"{actual_rows} rows, {actual_symbols} symbols, "
@@ -733,9 +739,20 @@ class OTFBacktestRunner:
             OTFBacktestEngine,
             OTFStrategySignal,
         )
+        from otf_trading_rules import ProductRuleBook
 
         logger.info("=== OTF BACKTEST EXECUTION ===")
         otf_config = self.config.get("otf_data", {})
+
+        rule_book = None
+        try:
+            rule_book = ProductRuleBook.from_csv()
+            logger.info(
+                f"Product rules loaded: {len(rule_book.rules)} funds, "
+                f"{len(rule_book.fee_tiers)} with fee tiers"
+            )
+        except Exception as exc:
+            logger.warning(f"Product rules not loaded: {exc}")
 
         engine = OTFBacktestEngine(
             db_path=self.otf_db_path,
@@ -755,6 +772,8 @@ class OTFBacktestRunner:
                 "fee_rate_redemption", 0.0015
             ),
             initial_cash=self.config.get("initial_cash", 1_000_000.0),
+            product_rule_book=rule_book,
+            strict_product_rules=rule_book is not None,
         )
 
         signal = OTFStrategySignal(engine)
@@ -773,17 +792,43 @@ class OTFBacktestRunner:
                 logger.warning(f"Unknown OTF strategy: {strategy_name}")
                 continue
 
-            target_weights = signal.generate_target_weights(
+            # Generate targets with signal→submit separation
+            target_weights_raw = signal.generate_target_weights(
                 sig_func,
                 start=self.config.get("backtest_start", "2018-01-01"),
                 end=self.config.get("backtest_end", "2026-07-17"),
             )
+            trading_dates = engine._trading_dates
+            start_ts = pd.Timestamp(
+                self.config.get("backtest_start", "2018-01-01")
+            )
+            end_ts = pd.Timestamp(
+                self.config.get("backtest_end", "2026-07-17")
+            )
+            weight_rows: list[dict] = []
+            signal_map: dict[pd.Timestamp, pd.Timestamp] = {}
+            for sd in target_weights_raw.index:
+                if sd < start_ts or sd > end_ts:
+                    continue
+                sub_candidates = trading_dates[trading_dates > sd]
+                if len(sub_candidates) == 0:
+                    break
+                sub_date = sub_candidates[0]
+                if sub_date > end_ts:
+                    break
+                row: dict[str, object] = {"date": sub_date}
+                for f in engine.available_fund_codes:
+                    row[f] = target_weights_raw.loc[sd].get(f, 0.0)
+                weight_rows.append(row)
+                signal_map[sub_date] = sd
+            target_weights = pd.DataFrame(weight_rows).set_index("date") if weight_rows else pd.DataFrame()
 
             daily = engine.run_backtest(
                 target_weights,
                 start=self.config.get("backtest_start", "2018-01-01"),
                 end=self.config.get("backtest_end", "2026-07-17"),
                 rebalance_every=self.config.get("rebalance_every", 5),
+                signal_dates=signal_map,
             )
 
             metrics = engine.calculate_metrics(daily)
@@ -917,7 +962,22 @@ class ReportGenerator:
         return v
 
 
-def run_experiment():
+def _resolve_config_path(argv: list[str] | None = None) -> str:
+    """Return the requested experiment config or the project default."""
+    args = list(sys.argv[1:] if argv is None else argv)
+    if "--config" in args:
+        idx = args.index("--config")
+        if idx + 1 >= len(args) or args[idx + 1].startswith("--"):
+            raise ValueError("--config requires a JSON file path")
+        return os.path.abspath(args[idx + 1])
+    return os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "config",
+        "unified_experiment.json",
+    )
+
+
+def run_experiment(config_path: str | None = None):
     log_lines: list[str] = []
 
     def log(msg: str):
@@ -937,12 +997,9 @@ def run_experiment():
     log(f"Git commit: {git_info['git_commit']} ({git_info['git_status']})")
     log(f"Code fingerprint: {compute_code_fingerprint()}")
 
-    config_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "config",
-        "unified_experiment.json",
-    )
-    with open(config_path, "r") as f:
+    config_path = config_path or _resolve_config_path()
+    log(f"Config: {config_path}")
+    with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
     run_id = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
@@ -1101,7 +1158,7 @@ def run_experiment():
     report.write_run_log(log_lines)
     log(f"Phase 5 time: {time.time()-t0:.1f}s")
 
-    # Final summary
+    # Final summary and research status (P0-B)
     log("\n" + "=" * 60)
     log("EXPERIMENT COMPLETE")
     log(f"Run ID: {run_id}")
@@ -1109,6 +1166,42 @@ def run_experiment():
     log(f"Gate passed: {gate_passed}")
     if failed_reasons:
         log(f"Failures: {failed_reasons}")
+
+    # Write latest_research_status.json as unique source of truth
+    status_enum = "BUILD_FAILED" if not gate_passed else "PAPER_TRADE_CANDIDATE"
+    completed = []
+    failed = []
+    if gate_ok:
+        completed.append("DATA_GATE")
+    else:
+        failed.append("DATA_GATE")
+    if factor_ok:
+        completed.append("FACTOR_REBUILD")
+    else:
+        failed.append("FACTOR_REBUILD")
+    try:
+        if regime_ok:
+            completed.append("REGIME_REBUILD")
+        else:
+            failed.append("REGIME_REBUILD")
+    except NameError:
+        failed.append("REGIME_REBUILD")
+    if gate_passed:
+        completed.extend(["BACKTEST", "REPORT_GENERATION"])
+
+    write_research_status(
+        run_id=run_id,
+        status=status_enum,
+        completed_phases=completed,
+        failed_phases=failed,
+        input_hashes={
+            "db_sha256": gate.manifest_data.get("db_sha256"),
+            "factor_artifact_sha256": factor_manifest.get("sha256"),
+        },
+        gate_result={"passed": gate_passed, "reasons": failed_reasons},
+        blocking_issues=failed_reasons,
+    )
+    log(f"Research status written: {status_enum}")
     log("=" * 60)
 
 
@@ -1223,190 +1316,12 @@ def main():
 
     # The experiment implementation lives in one place.  Keeping a second
     # copied main flow caused fixes to apply to an inactive definition.
-    return run_experiment()
-
-    log("=" * 60)
-    log("UNIFIED ETF STRATEGY EXPERIMENT")
-    log("=" * 60)
-
-    # Print environment info
-    log(f"Python: {sys.version}")
-    git_info = get_git_info()
-    log(f"Git commit: {git_info['git_commit']} ({git_info['git_status']})")
-    log(f"Code fingerprint: {compute_code_fingerprint()}")
-    deps = get_dependency_summary()
-    log(f"Dependencies: {', '.join(f'{k}={v}' for k, v in deps.items())}")
-
-    config_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "config",
-        "unified_experiment.json",
-    )
-    with open(config_path, "r") as f:
-        config = json.load(f)
-
-    run_id = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
-    gate_passed = True
-    failed_reasons: list[str] = []
-
-    # Phase 1: Data Gate
-    log("\n--- PHASE 1: DATA GATE ---")
-    t0 = time.time()
-    gate = DataGate(config)
-    gate_ok = gate.run_all()
-    if not gate_ok:
-        gate_passed = False
-        failed_reasons.extend(gate.errors)
-        log(f"DATA GATE FAILED: {gate.errors}")
-    else:
-        log("DATA GATE PASSED")
-    log(f"Phase 1 time: {time.time()-t0:.1f}s")
-
-    if not gate_ok:
-        report = ReportGenerator(config, run_id)
-        report.write_manifest(
-            db_info=gate.manifest_data,
-            factor_manifest={},
-            full_results={},
-            oos_results={},
-            gate_passed=False,
-            failed_reasons=failed_reasons,
-        )
-        (report.report_dir / "FAILED").write_text(
-            "EXPERIMENT FAILED - data gate did not pass\n"
-            + "\n".join(failed_reasons),
-            encoding="utf-8",
-        )
-        report.write_run_log(log_lines)
-        log("FAILED manifest written; factor and backtest phases suppressed")
-        sys.exit(1)
-
-    # Phase 2: Factor Rebuild (or validate an already-completed artifact).
-    log("\n--- PHASE 2: FACTOR REBUILD ---")
-    t0 = time.time()
-    factor_builder = FactorBuilder(config)
-    if "--skip-factor-rebuild" in sys.argv:
-        log("Existing factor artifact requested; validating without recomputation")
-        factor_ok = factor_builder.validate()
-    else:
-        factor_ok = factor_builder.rebuild()
-    if not factor_ok:
-        gate_passed = False
-        failed_reasons.append(getattr(factor_builder, "error", "FACTOR_REBUILD_FAILED"))
-        log("FACTOR REBUILD FAILED - aborting experiment")
-        report = ReportGenerator(config, run_id)
-        report.write_manifest(
-            db_info=gate.manifest_data,
-            factor_manifest={},
-            full_results={},
-            oos_results={},
-            gate_passed=False,
-            failed_reasons=failed_reasons,
-        )
-        report.write_run_log(log_lines)
-        log("FAILED manifest written. Experiment aborted.")
-        sys.exit(1)
-    factor_manifest = factor_builder.get_manifest()
-    log(f"Phase 2 time: {time.time()-t0:.1f}s")
-
-    # Phase 3: Regime Rebuild
-    log("\n--- PHASE 3: REGIME REBUILD ---")
-    t0 = time.time()
-    regime_builder = RegimeBuilder(config)
     try:
-        regime_ok = regime_builder.rebuild()
-    except Exception as exc:
-        logger.exception("Regime rebuild raised an exception")
-        regime_builder.error = (
-            f"REGIME_REBUILD_EXCEPTION: {type(exc).__name__}: {exc}"
-        )
-        regime_ok = False
-    if not regime_ok:
-        gate_passed = False
-        failed_reasons.append(
-            getattr(regime_builder, "error", "REGIME_REBUILD_FAILED")
-        )
-        log("REGIME REBUILD FAILED - aborting experiment")
-        report = ReportGenerator(config, run_id)
-        report.write_manifest(
-            db_info=gate.manifest_data,
-            factor_manifest=factor_manifest,
-            full_results={},
-            oos_results={},
-            gate_passed=False,
-            failed_reasons=failed_reasons,
-        )
-        (report.report_dir / "FAILED").write_text(
-            "EXPERIMENT FAILED - regime rebuild did not pass\n"
-            + "\n".join(failed_reasons),
-            encoding="utf-8",
-        )
-        report.write_run_log(log_lines)
-        sys.exit(1)
-    log(f"Phase 3 time: {time.time()-t0:.1f}s")
-
-    # Phase 4: Backtest Execution (ETF)
-    log("\n--- PHASE 4: BACKTEST EXECUTION (ETF) ---")
-    t0 = time.time()
-    bt_runner = BacktestRunner(config)
-    full_results = bt_runner.run()
-    oos_results = bt_runner.compute_oos_metrics()
-    log(f"Phase 4 time: {time.time()-t0:.1f}s")
-
-    # Phase 4b: OTF Backtest Execution (if configured)
-    otf_results: dict[str, dict] = {}
-    otf_daily_results: dict[str, pd.DataFrame] = {}
-    if config.get("otf_strategies"):
-        log("\n--- PHASE 4b: BACKTEST EXECUTION (OTF NAV) ---")
-        t0 = time.time()
-        try:
-            otf_runner = OTFBacktestRunner(config)
-            otf_results = otf_runner.run()
-            otf_daily_results = otf_runner.daily_results
-        except Exception as exc:
-            logger.exception("OTF backtest raised an exception")
-            log(f"OTF_BACKTEST_FAILED: {type(exc).__name__}: {exc}")
-        log(f"Phase 4b time: {time.time()-t0:.1f}s")
-
-    # Phase 5: Report Generation
-    log("\n--- PHASE 5: REPORT GENERATION ---")
-    t0 = time.time()
-    report = ReportGenerator(config, run_id)
-    all_full_results = {**full_results, **otf_results}
-    report.write_manifest(
-        db_info=gate.manifest_data,
-        factor_manifest=factor_manifest,
-        full_results=all_full_results,
-        oos_results=oos_results,
-        gate_passed=gate_passed,
-        failed_reasons=failed_reasons,
-    )
-    if gate_passed:
-        report.write_summary(all_full_results, oos_results)
-        report.write_daily_csvs(bt_runner.daily_results)
-        if otf_daily_results:
-            report.write_daily_csvs(otf_daily_results)
-    else:
-        failed_marker = report.report_dir / "FAILED"
-        failed_marker.write_text(
-            "EXPERIMENT FAILED - see experiment_manifest.json for details\n"
-            + "\n".join(failed_reasons),
-            encoding="utf-8",
-        )
-        log("FAILED marker written; official summary suppressed")
-
-    report.write_run_log(log_lines)
-    log(f"Phase 5 time: {time.time()-t0:.1f}s")
-
-    # Final summary
-    log("\n" + "=" * 60)
-    log("EXPERIMENT COMPLETE")
-    log(f"Run ID: {run_id}")
-    log(f"Report directory: {report.report_dir}")
-    log(f"Gate passed: {gate_passed}")
-    if failed_reasons:
-        log(f"Failures: {failed_reasons}")
-    log("=" * 60)
+        config_path = _resolve_config_path(sys.argv[1:])
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(2)
+    return run_experiment(config_path)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass, replace
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -77,6 +78,11 @@ class FundTradingRule:
     redemption_open: bool = True
     rule_status: str = "ASSUMPTION"
     official_source: str = ""
+    effective_from: str = ""
+    effective_to: str = ""
+    channel: str = ""
+    source_url: str = ""
+    verified_at: str = ""
 
 
 @dataclass(frozen=True)
@@ -95,17 +101,32 @@ class TradingRestrictionEvent:
 
 
 class ProductRuleBook:
+    """Product rule book with rule status filtering per planning.md P0-2."""
+
+    # Rule status levels (planning.md §3)
+    OFFICIAL_VERIFIED = "OFFICIAL_VERIFIED"
+    DISTRIBUTOR_VERIFIED = "DISTRIBUTOR_VERIFIED"
+    CONSERVATIVE_ASSUMPTION = "CONSERVATIVE_ASSUMPTION"
+    PRODUCT_TYPE_ASSUMPTION = "PRODUCT_TYPE_ASSUMPTION"
+    MISSING = "MISSING"
+
+    # Default allowed statuses for formal research
+    FORMAL_RESEARCH_STATUSES = {OFFICIAL_VERIFIED, DISTRIBUTOR_VERIFIED}
+    STRESS_TEST_STATUSES = {OFFICIAL_VERIFIED, DISTRIBUTOR_VERIFIED, CONSERVATIVE_ASSUMPTION}
+
     def __init__(
         self,
         rules: dict[str, FundTradingRule] | None = None,
         fee_tiers: dict[str, list[RedemptionFeeTier]] | None = None,
         subscription_fee_tiers: dict[str, list[SubscriptionFeeTier]] | None = None,
         events: dict[str, list[TradingRestrictionEvent]] | None = None,
+        allowed_rule_statuses: set[str] | None = None,
     ):
         self.rules = rules or {}
         self.fee_tiers = fee_tiers or {}
         self.subscription_fee_tiers = subscription_fee_tiers or {}
         self.events = events or {}
+        self.allowed_rule_statuses = allowed_rule_statuses or self.FORMAL_RESEARCH_STATUSES
 
     @classmethod
     def from_csv(
@@ -133,6 +154,11 @@ class ProductRuleBook:
                     redemption_open=_bool(row.get("redemption_open")),
                     rule_status=str(row.get("rule_status", "ASSUMPTION")),
                     official_source=str(row.get("official_source", "")),
+                    effective_from=str(row.get("effective_from", "")).strip(),
+                    effective_to=str(row.get("effective_to", "")).strip(),
+                    channel=str(row.get("channel", "")).strip(),
+                    source_url=str(row.get("source_url", "")).strip(),
+                    verified_at=str(row.get("verified_at", "")).strip(),
                 )
         tiers: dict[str, list[RedemptionFeeTier]] = {}
         with Path(fee_tiers_path).open("r", encoding="utf-8-sig", newline="") as handle:
@@ -207,6 +233,51 @@ class ProductRuleBook:
 
     def rule_for(self, fund_code: str) -> FundTradingRule | None:
         return self.rules.get(normalize_fund_code(fund_code))
+
+    def is_rule_allowed(
+        self,
+        fund_code: str,
+        submit_date: date | datetime | pd.Timestamp | None = None,
+        channel: str | None = None,
+    ) -> tuple[bool, str]:
+        """Check if a fund's rule allows trading given status, validity period and channel.
+
+        Returns (allowed, reason) where reason explains rejection if not allowed.
+        """
+        code = normalize_fund_code(fund_code)
+        rule = self.rules.get(code)
+        if rule is None:
+            return False, "RULE_MISSING"
+        status = rule.rule_status
+        if status not in self.allowed_rule_statuses:
+            return False, f"RULE_STATUS_NOT_ALLOWED:{status}"
+        if submit_date is not None and (rule.effective_from or rule.effective_to):
+            submit_date_obj = pd.Timestamp(submit_date).date()
+            if rule.effective_from:
+                try:
+                    eff_from = datetime.strptime(rule.effective_from, "%Y-%m-%d").date()
+                    if submit_date_obj < eff_from:
+                        return False, "RULE_NOT_EFFECTIVE_ON_DATE"
+                except ValueError:
+                    pass
+            if rule.effective_to:
+                try:
+                    eff_to = datetime.strptime(rule.effective_to, "%Y-%m-%d").date()
+                    if submit_date_obj > eff_to:
+                        return False, "RULE_NOT_EFFECTIVE_ON_DATE"
+                except ValueError:
+                    pass
+        if channel is not None and rule.channel:
+            if channel.lower() not in rule.channel.lower():
+                return False, f"CHANNEL_MISMATCH:{channel} vs {rule.channel}"
+        return True, ""
+
+    def rule_count_by_status(self) -> dict[str, int]:
+        """Count rules by status level for reporting."""
+        counts: dict[str, int] = {}
+        for rule in self.rules.values():
+            counts[rule.rule_status] = counts.get(rule.rule_status, 0) + 1
+        return counts
 
     def fee_rate(self, fund_code: str, holding_days: int, fallback: float) -> float:
         tiers = self.fee_tiers.get(normalize_fund_code(fund_code), [])

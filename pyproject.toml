@@ -7,9 +7,16 @@ dependencies = [
     "pandas",
     "numpy",
     "scikit-learn",
-    "torch",
-    "stable-baselines3",
+    "akshare",
+    "requests",
+    "joblib",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest"]
+ml = ["torch"]
+fetch = ["akshare", "requests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

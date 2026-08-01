@@ -1,0 +1,77 @@
+# Market State Engine Configuration
+# v1.0 - transparent, interpretable, low-parameter
+
+# Proxy ETF symbols for each asset class
+proxy_etfs:
+  domestic_equity:
+    csi300: ["510300", "159919"]
+    csi500: ["510500"]
+    csi1000: ["159845"]
+    chinext: ["159915", "159949"]
+    dividend: ["510880"]
+  overseas_equity:
+    sp500: ["513500"]
+    nasdaq: ["513100"]
+    hangseng: ["159920"]
+  commodity:
+    gold: ["518880"]
+  money_market:
+    mmf: ["511660", "511880"]
+
+# OTF bond funds as bond proxies (from otf_research.sqlite)
+bond_proxies:
+  gov_bond_3_5y: "001512"
+  policy_bank_1_3y: "005839"
+  credit_bond: "000148"
+  ultra_short: "006663"
+
+# Feature computation parameters
+feature:
+  trend_periods: [60, 120, 200]
+  vol_periods: [20, 60]
+  corr_window: 60
+  breadth_periods: [120, 200]
+  vol_expansion_window: 20
+
+# Score weights for each state
+# Each weight maps to a feature name + direction (+1 = higher feature = higher score)
+scores:
+  risk_on:
+    trend_equity_120: 0.30
+    trend_overseas_120: 0.15
+    breadth_120_200: 0.25
+    neg_vol_equity_20: 0.20
+    neg_corr_equity_gold_60: 0.10
+  neutral:
+    base_score: 50.0
+  inflation_real_asset:
+    trend_gold_120: 0.30
+    gold_vs_equity_60: 0.25
+    rate_trend_60: 0.20
+    dividend_vs_growth_60: 0.25
+  deflation_rate_down:
+    trend_bond_60: 0.25
+    neg_trend_equity_120: 0.20
+    neg_trend_gold_120: 0.15
+    neg_rate_trend_60: 0.15
+    neg_breadth_120_200: 0.10
+    vol_equity_60: 0.15
+  stress:
+    vol_equity_60: 0.25
+    vol_expansion: 0.10
+    neg_trend_equity_60: 0.20
+    neg_trend_equity_120: 0.10
+    corr_equity_gold_60: 0.10
+    neg_breadth_120_200: 0.15
+    max_drawdown_60: 0.10
+
+# Hysteresis mechanism
+hysteresis:
+  confirm_months: 2
+  fast_switch_threshold: 25.0
+  min_state_duration_days: 30
+
+# Observation frequency (calendar days, approximate)
+observation:
+  frequency_days: 21
+  lookback_data_days: 400
