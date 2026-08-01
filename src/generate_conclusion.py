@@ -6,8 +6,9 @@ from datetime import datetime, timezone
 status = json.loads(
     pathlib.Path("reports/latest_research_status.json").read_text(encoding="utf-8")
 )
+run_id = status["run_id"]
 run_dir = pathlib.Path(
-    "reports/strategy_research/walkforward_continuous/walkforward_20260731_082713"
+    f"reports/strategy_research/walkforward_continuous/{run_id}"
 )
 strategies = [
     "B1_Static_60_20_20",

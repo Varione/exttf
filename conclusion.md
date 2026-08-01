@@ -1,11 +1,11 @@
 ﻿# OTF Walk-forward Continuous OOS 结论报告
 
-自动生成时间: 2026-08-01 11:34:21 UTC
+自动生成时间: 2026-08-01 12:29:29 UTC
 数据来源: reports/latest_research_status.json + walkforward_20260731_082713/
 
 ## 运行信息
 
-- Run ID: `walkforward_20260731_082713`
+- Run ID: `walkforward_20260801_121725`
 - 状态: `OOS_GATE_FAILED`
 - 账户模式: `FROZEN_PARAMETER_CONTINUOUS_OOS`
 - OOS区间: 2021-01-04~2026-07-27 (1347个交易日)

@@ -1,0 +1,77 @@
+{
+  "manifest_type": "BASELINE_FREEZE_MANIFEST",
+  "freeze_timestamp": "2026-08-01T12:30:00.000000+00:00",
+  "git_commit": "3bd2837",
+  "git_dirty": false,
+  "data_snapshot": {
+    "db_path": "data/processed/otf_expanded.sqlite",
+    "db_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+    "rules_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
+    "mapping_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
+    "config_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
+    "calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7"
+  },
+  "oos_period": "2021-01-04~2026-07-27",
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "test_result": {
+    "record": "reports/test_regression/regression_20260801_113005.json",
+    "passed": 557,
+    "failed": 0,
+    "all_passed": true
+  },
+  "frozen_runs": {
+    "B1_B2_B3_S1_continuous_oos": {
+      "run_id": "walkforward_20260801_121725",
+      "parameter_freeze_id": "b600c332e0f4f37248662f00e2d984f57737ebdb98ed1beb72b537559b5f5f44",
+      "output_dir": "reports/strategy_research/walkforward_continuous/walkforward_20260801_121725",
+      "note": "FROZEN_PARAMETER_CONTINUOUS_OOS on clean commit 3bd2837"
+    },
+    "C1_core_satellite": {
+      "run_id": "core_satellite_20260801_114514",
+      "parameter_freeze_id": "ba06b1a88ea02db4c7accb1e3187f00acd1f38081d9b4f69a6c6d4e56eb34fe1",
+      "output_dir": "reports/strategy_research/core_satellite/core_satellite_20260801_114514"
+    },
+    "C2_low_turnover_core_satellite": {
+      "run_id": "low_turnover_core_satellite_20260801_115521",
+      "parameter_freeze_id": "68b4b30e0f1d74b8127596da5869da58f274a09198a72bc31e4ed4512a961560",
+      "output_dir": "reports/strategy_research/core_satellite_low_turnover/low_turnover_core_satellite_20260801_115521"
+    },
+    "C3_low_turnover_momentum": {
+      "run_id": "c3_low_turnover_momentum_20260801_120449",
+      "parameter_freeze_id": "6bda2cf7a410050cf63686ac6521850e13d4e6f9259191f369f00cfac1109bb8",
+      "output_dir": "reports/strategy_research/c3_low_turnover_momentum/c3_low_turnover_momentum_20260801_120449"
+    },
+    "M20_candidate": {
+      "run_id": "candidate_20260801_121109",
+      "output_dir": "reports/strategy_research/candidate_strategies/candidate_20260801_121109"
+    },
+    "attribution": {
+      "run_id": "phase_a_20260801_201710",
+      "output_dir": "reports/strategy_research/attribution/phase_a_20260801_201710",
+      "accounting_identity_passed": true,
+      "warnings": 0
+    }
+  },
+  "superseded_run_ids": {
+    "walkforward_20260731_082713": "superseded_by_walkforward_20260801_121725",
+    "core_satellite_20260730_124538": "superseded_by_core_satellite_20260801_114514",
+    "low_turnover_core_satellite_20260730_125734": "superseded_by_low_turnover_core_satellite_20260801_115521",
+    "c3_low_turnover_momentum_20260730_161845": "superseded_by_c3_low_turnover_momentum_20260801_120449",
+    "candidate_20260729_141050": "superseded_by_candidate_20260801_121109"
+  },
+  "gate_summary": {
+    "B1_Static_60_20_20": "FAIL",
+    "B2_Static_EW_4Asset": "PASS",
+    "B3_Rolling_Risk_Parity": "PASS",
+    "S1_State_Rotation_Fixed": "FAIL",
+    "C1_Core_Satellite_Momentum": "FAIL",
+    "C2_Low_Turnover_Core_Satellite": "FAIL",
+    "C3_Low_Turnover_Momentum": "FAIL",
+    "M20_Candidate": "PARTIAL_PAPER_TRADE_CANDIDATE"
+  },
+  "restrictions": {
+    "parameter_search": "FORBIDDEN_ALL_PARAMETERS_FROZEN",
+    "new_research": "FORBIDDEN_UNTIL_P1_AND_P2_LEVELS",
+    "fresh_oos": "NOT_STARTED_T0_NOT_REGISTERED"
+  }
+}

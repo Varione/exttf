@@ -6,12 +6,12 @@
 
 ### 0. 当前状态与审核基线
 
-截至 2026-07-31，项目已经完成 ETF 数据、场外基金映射、产品规则、执行日历、FIFO 申赎、连续账户、候选策略、压力测试、实验产物验证和收益归因等主要基础设施建设。当前问题已经从“功能是否存在”转变为“当前代码是否封版、产物是否一致、历史数据是否真实、是否存在真正未见样本”。
+截至 2026-08-01，项目已经完成 ETF 数据、场外基金映射、产品规则、执行日历、FIFO 申赎、连续账户、候选策略、压力测试、实验产物验证和收益归因等主要基础设施建设。当前问题已经从“功能是否存在”转变为“工程基线是否已封版、历史数据是否真实、是否存在真正未见样本”。
 
 当前统一状态为：
 
 ```text
-ENGINEERING_BASELINE_NOT_FROZEN
+ENGINEERING_BASELINE_FROZEN_20260801
 LATEST_STATUS_SOURCE_UPDATED_20260801
 FULL_REGRESSION_RECORDED_557_PASSED
 C3_REFINALIZED_20260801
@@ -23,12 +23,8 @@ STRATEGY_PARAMETER_SEARCH_FROZEN
 
 已确认的事实：
 
-- `reports/latest_research_status.json` 仍停留在 2026-07-29，记录 `416 passed`，没有覆盖后续 C1、C2、C3、执行日历修复和归因模块；
-- 项目保留的较新完整回归记录为 `426 passed`，但该记录仍早于部分 2026-07-30 修改，不能代表当前最终代码；
-- 当前 C3 代码已将不适用产物标记为 `NOT_APPLICABLE`，但最新 C3 状态产物仍保留旧 validator 的非空错误，属于“代码已修复、报告未重新定版”；
-- B2-LT 可作为低换手研究基准，C1 是高收益高换手对照，C2/C3 未证明稳定增量，M20 只能作为回溯观察策略；
-- 当前所有策略仍受 `PIT_PARTIAL`、历史规则未建立和 NAV 发布时间不可得限制；
-- 当前工作树仍为 dirty，不能把现有运行标记为最终冻结实验；
+- `reports/latest_research_status.json` 为唯一状态源，已覆盖全部研究并指向冻结重跑后的 run_id（`walkforward_20260801_121725` 等），引用全量回归记录 `reports/test_regression/regression_20260801_113005.json`（557 passed）；
+- 工程基线已在干净 commit `3bd2837` 上完成冻结重跑（WF/C1/C2/C3/M20/归因），输入哈希与封版前完全一致，产物 `baseline_freeze_manifest.json` 已生成；
 - 在完成本计划 P0 和 P1 前，禁止新增 C4/C5、重新搜索动量周期、修改 Gate 门槛或继续扩展 ML/RL。
 
 ---
@@ -456,9 +452,9 @@ P3 只有在 P0、P1 完成并取得首个前向检查点后才允许启动。�
 - [x] 根目录一次性脚本完成分类；
 - [x] `pyproject.toml` 与实际依赖一致；
 - [x] 删除或归档 0 字节和无效占位产物；
-- [ ] 得到 clean Git commit；
-- [ ] 在 clean commit 上完成冻结重跑；
-- [ ] 生成 `baseline_freeze_manifest.json`。
+- [x] 得到 clean Git commit；
+- [x] 在 clean commit 上完成冻结重跑；
+- [x] 生成 `baseline_freeze_manifest.json`。
 
 ### P1 历史真实性
 

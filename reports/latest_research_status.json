@@ -1,11 +1,13 @@
 {
-  "run_id": "walkforward_20260731_082713",
+  "run_id": "walkforward_20260801_121725",
   "status": "OOS_GATE_FAILED",
-  "timestamp": "2026-08-01T11:50:00.000000+00:00",
+  "timestamp": "2026-08-01T12:35:00.000000+00:00",
   "completed_phases": [
     "ARTIFACT_EXPORT",
     "ASSET_BUDGET_KEY_SPACE_FIXED",
+    "BASELINE_FREEZE_MANIFEST_GENERATED",
     "C3_REFINALIZED_WITH_CURRENT_VALIDATOR",
+    "CLEAN_COMMIT_FREEZE_RERUN_3BD2837",
     "EXECUTION_CALENDAR_REBUILT",
     "FROZEN_PARAMETER_CONTINUOUS_OOS",
     "FULL_GATE_IMPLEMENTATION",
@@ -30,8 +32,8 @@
     "total_elapsed_seconds": 874.79
   },
   "git": {
-    "commit": "32ebbcadb1467a48b5772270680aa9853be7f4ec",
-    "dirty": true,
+    "commit": "3bd2837",
+    "dirty": false,
     "branch": ""
   },
   "input_hashes": {
@@ -81,7 +83,7 @@
   "rule_scenario": "CONSERVATIVE_STANDARD",
   "historical_rule_status": "CURRENT_SNAPSHOT_ONLY",
   "historical_truth_gate": false,
-  "parameter_freeze_id": "WALKFORWARD_20260731",
+  "parameter_freeze_id": "b600c332e0f4f37248662f00e2d984f57737ebdb98ed1beb72b537559b5f5f44",
   "annual_restart_sensitivity_status": "SKIPPED",
   "strategy_research_status": {
     "B1_Static_60_20_20": {
@@ -161,7 +163,7 @@
   },
   "run_registry": {
     "B2LT": {
-      "run_id": "core_satellite_20260730_124538",
+      "run_id": "core_satellite_20260801_114514",
       "bundle": "B2_LT_Static_EW_4Asset",
       "metrics_sha256": "67625410796a4ff12fa866e3786ba4fda4172758b09f1f7587bf7334f6ce9073",
       "net_cagr_pct": 5.9075,
@@ -169,29 +171,29 @@
       "mdd_pct": -10.0238
     },
     "C1": {
-      "run_id": "core_satellite_20260730_124538",
+      "run_id": "core_satellite_20260801_114514",
       "gate_passed": false
     },
     "C2": {
-      "run_id": "low_turnover_core_satellite_20260730_125734",
+      "run_id": "low_turnover_core_satellite_20260801_115521",
       "gate_passed": false
     },
     "C3": {
-      "run_id": "c3_low_turnover_momentum_20260730_161845",
+      "run_id": "c3_low_turnover_momentum_20260801_120449",
       "gate_passed": false,
       "artifact_validation_passed": true,
       "artifact_validation_final_passed": true
     },
     "M20": {
-      "run_id": "otf_walkforward_manifest_20260728"
+      "run_id": "candidate_20260801_121109"
     },
     "B1_B2_B3_S1": {
-      "run_id": "walkforward_20260731_082713",
+      "run_id": "walkforward_20260801_121725",
       "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS"
     }
   },
   "attribution": {
-    "run_id": "phase_a_calendar_final_20260730_212320",
+    "run_id": "phase_a_20260801_201710",
     "state": "COMPLETE",
     "scope": "explanatory_attribution_of_existing_frozen_runs",
     "strategies": [
@@ -209,14 +211,19 @@
     "not_candidate_selection": true
   },
   "superseded_runs": {
-    "walkforward_20260729_122541": "superseded_by_20260731_082713",
-    "walkforward_20260729_120701": "superseded_by_20260731_082713",
-    "walkforward_20260729_114818": "superseded_by_20260731_082713",
-    "core_satellite_20260729_151927": "superseded_by_20260730_124538",
-    "core_satellite_20260730_114756": "superseded_by_20260730_124538",
-    "low_turnover_core_satellite_20260729_163519": "superseded_by_20260730_125734",
-    "low_turnover_core_satellite_20260730_115448": "superseded_by_20260730_125734",
-    "c3_low_turnover_momentum_20260730_161131": "superseded_by_20260730_161845_refinalized_20260801"
+    "walkforward_20260731_082713": "superseded_by_20260801_121725",
+    "walkforward_20260729_122541": "superseded_by_20260801_121725",
+    "walkforward_20260729_120701": "superseded_by_20260801_121725",
+    "walkforward_20260729_114818": "superseded_by_20260801_121725",
+    "core_satellite_20260730_124538": "superseded_by_20260801_114514",
+    "core_satellite_20260730_114756": "superseded_by_20260801_114514",
+    "core_satellite_20260729_151927": "superseded_by_20260801_114514",
+    "low_turnover_core_satellite_20260730_125734": "superseded_by_20260801_115521",
+    "low_turnover_core_satellite_20260730_115448": "superseded_by_20260801_115521",
+    "low_turnover_core_satellite_20260729_163519": "superseded_by_20260801_115521",
+    "c3_low_turnover_momentum_20260730_161845": "superseded_by_20260801_120449",
+    "c3_low_turnover_momentum_20260730_161131": "superseded_by_20260801_120449",
+    "candidate_20260729_141050": "superseded_by_20260801_121109"
   },
   "gate_result": {
     "B1_Static_60_20_20": {
@@ -252,7 +259,6 @@
     "S1 relative_benchmark gate failed: CAGR advantage -0.64pp vs B2 (need +0.75pp)",
     "B1 absolute gate failed: sharpe 0.36 < 0.50, mdd -21.8% < -15%",
     "Rule temporal coverage incomplete: effective_from/verified_at fields empty for all 55 rules",
-    "Git worktree dirty: 40+ root-level one-off scripts not yet migrated; clean commit required before freeze rerun",
     "C3 sustained_confirmed_turnover gate failed (max 1.22 > 0.8) and double-fee gates failed; C3 stays frozen observation only"
   ],
   "finalization": {
@@ -268,6 +274,7 @@
       "sharpe": 0.9008,
       "mdd_pct": -10.0238
     },
+    "freeze_manifest": "baseline_freeze_manifest.json",
     "forward_observation": "NOT_STARTED_T0_NOT_REGISTERED"
   }
 }
