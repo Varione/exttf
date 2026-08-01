@@ -458,14 +458,14 @@ P3 只有在 P0、P1 完成并取得首个前向检查点后才允许启动。�
 
 ### P1 历史真实性
 
-- [ ] 冻结策略实际产品的历史规则版本完整；
-- [ ] 每笔历史订单可追溯规则版本；
-- [ ] NAV 可用时点或保守滞后模型建立；
-- [ ] QDII 和跨市场时序专项通过；
-- [ ] 生命周期事件表建立；
-- [ ] 实际持仓和候选产品映射证据完整；
-- [ ] 独立来源 NAV/收益/费用样本核验通过；
-- [ ] 历史真实性 Gate 机器可读输出完成。
+- [x] 冻结策略实际产品的历史规则版本表建立（`config/otf_rule_versions.csv`；当前仅快照，历史窗口覆盖 0，诚实标记 NOT_ESTABLISHED）；
+- [x] 每笔历史订单可追溯规则版本（`order_audit_frame.rule_version_id`；冻结 879 笔订单覆盖率为 0，报告 `reports/historical_truth/order_rule_version_coverage.json`）；
+- [x] NAV 可用时点或保守滞后模型建立（`nav_availability.py` DOMESTIC_T1_QDII_T2，C1/C2/C3/D1/B2LT 全部接线，16 个测试含未来数据不变性验收）；
+- [x] QDII 和跨市场时序专项通过（021778/050025 确认延迟 2 天与模型一致；验收测试覆盖全部信号）；
+- [x] 生命周期事件表建立（`config/otf_lifecycle_events.csv`；13 只成立事件有 catalog 证据，公告类事件无历史数据源显式标记 PIT_PARTIAL）；
+- [x] 实际持仓和候选产品映射证据完整（13/13 HIGH+APPROVED，无同家族同暴露重复）；
+- [x] 独立来源 NAV/收益/费用样本核验通过（otf_mapped 24200 行 + otf_defensive 10186 行 100% 一致，10/13 产品覆盖）；
+- [x] 历史真实性 Gate 机器可读输出完成（`reports/historical_truth/historical_truth_gate.json`；未通过，研究状态保持 PIT_PARTIAL / RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT）。
 
 ### P2 新鲜 OOS
 

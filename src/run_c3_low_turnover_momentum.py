@@ -343,6 +343,7 @@ def _run_stress(
     signal_map: dict[str, str],
     base_config: dict[str, Any],
     run_dir: Path,
+    trading_dates: pd.DatetimeIndex | None = None,
 ) -> dict[str, Any]:
     if scenario == "double_fees":
         stressed_rules = rule_book.scaled_fees(2.0)
@@ -355,7 +356,7 @@ def _run_stress(
         raise ValueError(f"unknown_c3_stress:{scenario}")
 
     engine = _create_engine(stressed_rules)
-    signal = C3LowTurnoverMomentumSignal(growth_df)
+    signal = C3LowTurnoverMomentumSignal(growth_df, trading_dates=trading_dates)
     targets, audits = _signal_targets(signal, signal_dates, signal_map)
     daily, orders, rejections, turnover, fees, extra = _run_account(engine, targets, signal_map)
     metrics = _c3_metrics(daily, orders, turnover, audits)
@@ -467,7 +468,7 @@ def _run_research() -> int:
     }
 
     growth_df = schedule_engine._nav_df[["fund_code", "nav_date", "daily_growth_pct", "unit_nav"]].copy()
-    signal = C3LowTurnoverMomentumSignal(growth_df)
+    signal = C3LowTurnoverMomentumSignal(growth_df, trading_dates=trading_dates)
     targets, audits = _signal_targets(signal, signal_dates, signal_map)
 
     if targets.empty:
@@ -525,7 +526,7 @@ def _run_research() -> int:
     # Stress tests
     stresses: dict[str, Any] = {}
     for scenario in ("double_fees", "delay_plus_one_trading_day"):
-        stresses[scenario] = _run_stress(scenario, rule_book, growth_df, signal_dates, signal_map, config, run_dir)
+        stresses[scenario] = _run_stress(scenario, rule_book, growth_df, signal_dates, signal_map, config, run_dir, trading_dates=trading_dates)
 
     # Enrich metrics with stress results
     c3_metrics["double_fee_net_cagr_pct"] = stresses["double_fees"]["metrics"].get("net_cagr_pct")

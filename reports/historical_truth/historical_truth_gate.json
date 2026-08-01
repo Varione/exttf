@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-01",
+  "gate_name": "HISTORICAL_TRUTH_GATE",
+  "gate_passed": false,
+  "checks": {
+    "lifecycle_evidence_complete": {
+      "passed": false,
+      "evidence": "lifecycle_events_report.json",
+      "detail": "products_pit_partial=13; label=INCEPTION_EVIDENCE_COMPLETE; ANNOUNCEMENT_EVENT_EVIDENCE_NOT_ESTABLISHED"
+    },
+    "order_rule_version_valid_at_submit": {
+      "passed": false,
+      "evidence": "order_rule_version_coverage.json",
+      "detail": "orders_covered=0 total=879 coverage_ratio=0.0 status=NOT_ESTABLISHED"
+    },
+    "signal_information_has_registered_conservative_availability": {
+      "passed": true,
+      "evidence": "src/otf_rotation/nav_availability.py",
+      "detail": "DOMESTIC_T1_QDII_T2 registered and wired into C1/C2/C3/D1/B2LT signals"
+    },
+    "asset_mapping_official_or_verifiable_source": {
+      "passed": true,
+      "evidence": "mapping_evidence_report.json",
+      "detail": "mapping_evidence_complete=13 duplicate_pairs=0"
+    },
+    "independent_data_sample_verified": {
+      "passed": true,
+      "evidence": "mapping_evidence_report.json",
+      "detail": "independent_sample_products=10 ratio=0.7692"
+    },
+    "no_current_snapshot_backfill_of_history": {
+      "passed": false,
+      "evidence": "order_rule_version_coverage.json",
+      "detail": "historical_rule_status=NOT_ESTABLISHED"
+    }
+  },
+  "research_status": "PIT_PARTIAL",
+  "result_labels": [
+    "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+    "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO"
+  ]
+}

@@ -1,0 +1,260 @@
+{
+  "generated_at": "2026-08-01T14:18:50.248432+00:00",
+  "rule_versions_path": "config/otf_rule_versions.csv",
+  "total_orders": 879,
+  "total_covered": 0,
+  "total_uncovered": 879,
+  "overall_coverage_ratio": 0.0,
+  "historical_rule_status": "NOT_ESTABLISHED",
+  "per_strategy": {
+    "WF_B1": {
+      "orders": 114,
+      "covered": 0,
+      "uncovered": 114,
+      "coverage_ratio": 0.0
+    },
+    "WF_B2": {
+      "orders": 107,
+      "covered": 0,
+      "uncovered": 107,
+      "coverage_ratio": 0.0
+    },
+    "WF_B3": {
+      "orders": 170,
+      "covered": 0,
+      "uncovered": 170,
+      "coverage_ratio": 0.0
+    },
+    "WF_S1": {
+      "orders": 182,
+      "covered": 0,
+      "uncovered": 182,
+      "coverage_ratio": 0.0
+    },
+    "C1": {
+      "orders": 74,
+      "covered": 0,
+      "uncovered": 74,
+      "coverage_ratio": 0.0
+    },
+    "C2": {
+      "orders": 43,
+      "covered": 0,
+      "uncovered": 43,
+      "coverage_ratio": 0.0
+    },
+    "C3": {
+      "orders": 63,
+      "covered": 0,
+      "uncovered": 63,
+      "coverage_ratio": 0.0
+    },
+    "M20_D1": {
+      "orders": 109,
+      "covered": 0,
+      "uncovered": 109,
+      "coverage_ratio": 0.0
+    },
+    "M20_B2LT": {
+      "orders": 17,
+      "covered": 0,
+      "uncovered": 17,
+      "coverage_ratio": 0.0
+    }
+  },
+  "per_product": {
+    "000218": {
+      "orders": 197,
+      "covered": 0,
+      "uncovered": 197,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "001512": {
+      "orders": 135,
+      "covered": 0,
+      "uncovered": 135,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "160706": {
+      "orders": 154,
+      "covered": 0,
+      "uncovered": 154,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "260102": {
+      "orders": 154,
+      "covered": 0,
+      "uncovered": 154,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "000008": {
+      "orders": 22,
+      "covered": 0,
+      "uncovered": 22,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "000071": {
+      "orders": 31,
+      "covered": 0,
+      "uncovered": 31,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "000148": {
+      "orders": 28,
+      "covered": 0,
+      "uncovered": 28,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "006663": {
+      "orders": 15,
+      "covered": 0,
+      "uncovered": 15,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "007466": {
+      "orders": 54,
+      "covered": 0,
+      "uncovered": 54,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "050021": {
+      "orders": 38,
+      "covered": 0,
+      "uncovered": 38,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "050025": {
+      "orders": 41,
+      "covered": 0,
+      "uncovered": 41,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "016633": {
+      "orders": 9,
+      "covered": 0,
+      "uncovered": 9,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    },
+    "021778": {
+      "orders": 1,
+      "covered": 0,
+      "uncovered": 1,
+      "coverage_ratio": 0.0,
+      "version_ids": []
+    }
+  },
+  "uncovered_sample": [
+    {
+      "strategy": "WF_B1",
+      "fund_code": "000218",
+      "submit_date": "2021-02-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2021-02-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2021-02-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2021-03-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2021-04-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2021-04-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2021-04-14"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "000218",
+      "submit_date": "2021-05-06"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2021-05-18"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2021-06-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2021-06-11"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2021-08-02"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2021-08-12"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2022-02-07"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2022-02-17"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "000218",
+      "submit_date": "2022-03-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2022-03-11"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "000218",
+      "submit_date": "2022-04-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "001512",
+      "submit_date": "2022-04-01"
+    },
+    {
+      "strategy": "WF_B1",
+      "fund_code": "160706",
+      "submit_date": "2022-04-15"
+    }
+  ]
+}

@@ -79,12 +79,23 @@ def build_total_return_index(growth_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _history_for_code(
-    growth_df: pd.DataFrame, code: str, signal_date: pd.Timestamp
+    growth_df: pd.DataFrame,
+    code: str,
+    signal_date: pd.Timestamp,
+    trading_dates: pd.DatetimeIndex | None = None,
+    qdii_codes: list[str] | None = None,
 ) -> pd.DataFrame:
     frame = _normalise_growth_frame(growth_df)
+    cutoff = signal_date
+    if trading_dates is not None:
+        from otf_rotation.nav_availability import available_as_of, lag_for
+
+        cutoff = available_as_of(
+            trading_dates, pd.Timestamp(signal_date), lag_for(code, qdii_codes or ())
+        )
     return frame[
         (frame["fund_code"] == _normalise_code(code))
-        & (frame["nav_date"] <= pd.Timestamp(signal_date))
+        & (frame["nav_date"] <= pd.Timestamp(cutoff))
     ].sort_values("nav_date")
 
 
@@ -169,11 +180,12 @@ def _estimate_total_return_covariance_normalized(
     codes: list[str] | tuple[str, ...],
     signal_date: pd.Timestamp,
     window: int = COVARIANCE_DAYS,
+    cutoff: pd.Timestamp | None = None,
 ) -> tuple[pd.DataFrame | None, dict[str, Any]]:
     """Internal covariance path for an already-normalized growth frame."""
     selected_codes = [_normalise_code(code) for code in dict.fromkeys(codes)]
     limited = frame[
-        (frame["nav_date"] <= pd.Timestamp(signal_date))
+        (frame["nav_date"] <= pd.Timestamp(cutoff or signal_date))
         & frame["fund_code"].isin(selected_codes)
     ]
     returns = limited.pivot(
@@ -341,9 +353,13 @@ class CoreSatelliteMomentumSignal:
         satellite_budget: float = SATELLITE_BUDGET,
         buffer_threshold: float = BUFFER_THRESHOLD,
         drift_threshold: float = DRIFT_THRESHOLD,
+        trading_dates: pd.DatetimeIndex | None = None,
+        qdii_codes: list[str] | None = None,
     ):
         self.growth_df = _normalise_growth_frame(growth_df)
         self.total_return_index = build_total_return_index(self.growth_df)
+        self.trading_dates = trading_dates
+        self.qdii_codes = list(qdii_codes or [])
         self.core_weights = {
             _normalise_code(code): float(weight) for code, weight in core_weights.items()
         }
@@ -374,9 +390,16 @@ class CoreSatelliteMomentumSignal:
         return float(max_deviation) >= float(threshold) - 1e-12
 
     def _evaluate(self, code: str, signal_date: pd.Timestamp) -> dict[str, Any]:
+        cutoff = pd.Timestamp(signal_date)
+        if self.trading_dates is not None:
+            from otf_rotation.nav_availability import available_as_of, lag_for
+
+            cutoff = available_as_of(
+                self.trading_dates, pd.Timestamp(signal_date), lag_for(code, self.qdii_codes or [])
+            )
         history = self.growth_df[
             (self.growth_df["fund_code"] == _normalise_code(code))
-            & (self.growth_df["nav_date"] <= pd.Timestamp(signal_date))
+            & (self.growth_df["nav_date"] <= cutoff)
         ]
         observations = len(history)
         row: dict[str, Any] = {
@@ -449,8 +472,21 @@ class CoreSatelliteMomentumSignal:
         }
         if selected:
             cov_codes = list(self.core_weights) + selected
+            cov_cutoff = pd.Timestamp(signal_date)
+            if self.trading_dates is not None:
+                from otf_rotation.nav_availability import available_as_of, lag_for
+
+                cov_lags = {
+                    lag_for(code, self.qdii_codes or []) for code in cov_codes
+                }
+                cov_cutoff = available_as_of(
+                    self.trading_dates,
+                    pd.Timestamp(signal_date),
+                    max(cov_lags) if cov_lags else 1,
+                )
             covariance, covariance_audit = _estimate_total_return_covariance_normalized(
-                self.growth_df, cov_codes, signal_date, self.covariance_days
+                self.growth_df, cov_codes, signal_date, self.covariance_days,
+                cutoff=cov_cutoff,
             )
             if covariance is None:
                 for code in selected:

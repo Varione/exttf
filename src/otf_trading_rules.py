@@ -14,6 +14,7 @@ DEFAULT_RULES_PATH = Path("config/otf_product_rules.csv")
 DEFAULT_FEE_TIERS_PATH = Path("config/otf_redemption_fee_tiers.csv")
 DEFAULT_SUBSCRIPTION_FEE_TIERS_PATH = Path("config/otf_subscription_fee_tiers.csv")
 DEFAULT_EVENTS_PATH = Path("config/otf_trading_events.csv")
+DEFAULT_RULE_VERSIONS_PATH = Path("config/otf_rule_versions.csv")
 
 
 def _optional_float(value: object) -> float | None:
@@ -86,6 +87,55 @@ class FundTradingRule:
 
 
 @dataclass(frozen=True)
+class RuleVersion:
+    """One dated rule version record for order-level historical audit."""
+
+    fund_code: str
+    rule_version_id: str
+    effective_from: str = ""
+    effective_to: str = ""
+    channel: str = ""
+    source_type: str = ""
+    source_url: str = ""
+    verified_at: str = ""
+    rule_status: str = "CONSERVATIVE_ASSUMPTION"
+    subscription_confirmation_days: int = 1
+    redemption_confirmation_days: int = 1
+    redemption_settlement_days: int = 7
+    subscription_fee_rate: float = 0.0
+    minimum_holding_calendar_days: int = 0
+    maximum_subscription_amount_per_order: float | None = None
+    subscription_open: bool = True
+    redemption_open: bool = True
+    redemption_fee_tiers_json: str = ""
+    subscription_fee_tiers_json: str = ""
+    evidence_note: str = ""
+
+    def active_on(self, date: date) -> bool:
+        """True when this version window covers ``date``.
+
+        A version with no effective_from/effective_to bounds is treated as
+        not covering any historical date (empty window) so that current-only
+        snapshots never silently extend into the past.
+        """
+        if not self.effective_from and not self.effective_to:
+            return False
+        if self.effective_from:
+            try:
+                if date < datetime.strptime(self.effective_from, "%Y-%m-%d").date():
+                    return False
+            except ValueError:
+                pass
+        if self.effective_to:
+            try:
+                if date > datetime.strptime(self.effective_to, "%Y-%m-%d").date():
+                    return False
+            except ValueError:
+                pass
+        return True
+
+
+@dataclass(frozen=True)
 class TradingRestrictionEvent:
     fund_code: str
     start_date: pd.Timestamp
@@ -121,12 +171,71 @@ class ProductRuleBook:
         subscription_fee_tiers: dict[str, list[SubscriptionFeeTier]] | None = None,
         events: dict[str, list[TradingRestrictionEvent]] | None = None,
         allowed_rule_statuses: set[str] | None = None,
+        rule_versions: dict[str, list[RuleVersion]] | None = None,
     ):
         self.rules = rules or {}
         self.fee_tiers = fee_tiers or {}
         self.subscription_fee_tiers = subscription_fee_tiers or {}
         self.events = events or {}
         self.allowed_rule_statuses = allowed_rule_statuses or self.FORMAL_RESEARCH_STATUSES
+        self.rule_versions = rule_versions or {}
+
+    @classmethod
+    def _load_rule_versions(
+        cls, versions_path: str | Path
+    ) -> dict[str, list[RuleVersion]]:
+        versions: dict[str, list[RuleVersion]] = {}
+        path = Path(versions_path)
+        if not path.exists():
+            return versions
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            for row in csv.DictReader(handle):
+                code = normalize_fund_code(row["fund_code"])
+                versions.setdefault(code, []).append(
+                    RuleVersion(
+                        fund_code=code,
+                        rule_version_id=str(row.get("rule_version_id", "")).strip(),
+                        effective_from=str(row.get("effective_from", "")).strip(),
+                        effective_to=str(row.get("effective_to", "")).strip(),
+                        channel=str(row.get("channel", "")).strip(),
+                        source_type=str(row.get("source_type", "")).strip(),
+                        source_url=str(row.get("source_url", "")).strip(),
+                        verified_at=str(row.get("verified_at", "")).strip(),
+                        rule_status=str(
+                            row.get("rule_status", "CONSERVATIVE_ASSUMPTION")
+                        ),
+                        subscription_confirmation_days=int(
+                            row.get("subscription_confirmation_days") or 1
+                        ),
+                        redemption_confirmation_days=int(
+                            row.get("redemption_confirmation_days") or 1
+                        ),
+                        redemption_settlement_days=int(
+                            row.get("redemption_settlement_days") or 7
+                        ),
+                        subscription_fee_rate=float(
+                            row.get("subscription_fee_rate") or 0.0
+                        ),
+                        minimum_holding_calendar_days=int(
+                            row.get("minimum_holding_calendar_days") or 0
+                        ),
+                        maximum_subscription_amount_per_order=_optional_float(
+                            row.get("maximum_subscription_amount_per_order")
+                        ),
+                        subscription_open=_bool(row.get("subscription_open")),
+                        redemption_open=_bool(row.get("redemption_open")),
+                        redemption_fee_tiers_json=str(
+                            row.get("redemption_fee_tiers_json", "")
+                        ),
+                        subscription_fee_tiers_json=str(
+                            row.get("subscription_fee_tiers_json", "")
+                        ),
+                        evidence_note=str(row.get("evidence_note", "")),
+                    )
+                )
+        for code in versions:
+            versions[code].sort(key=lambda v: (v.effective_from, v.rule_version_id))
+        return versions
 
     @classmethod
     def from_csv(
@@ -135,6 +244,7 @@ class ProductRuleBook:
         fee_tiers_path: str | Path = DEFAULT_FEE_TIERS_PATH,
         subscription_fee_tiers_path: str | Path = DEFAULT_SUBSCRIPTION_FEE_TIERS_PATH,
         events_path: str | Path = DEFAULT_EVENTS_PATH,
+        rule_versions_path: str | Path | None = DEFAULT_RULE_VERSIONS_PATH,
     ) -> "ProductRuleBook":
         rules: dict[str, FundTradingRule] = {}
         with Path(rules_path).open("r", encoding="utf-8-sig", newline="") as handle:
@@ -229,10 +339,31 @@ class ProductRuleBook:
                             source=str(row.get("source", "")),
                         )
                     )
-        return cls(rules, tiers, subscription_tiers, events)
+        versions = cls._load_rule_versions(rule_versions_path or "")
+        return cls(rules, tiers, subscription_tiers, events, rule_versions=versions)
 
     def rule_for(self, fund_code: str) -> FundTradingRule | None:
         return self.rules.get(normalize_fund_code(fund_code))
+
+    def rule_version_for(
+        self, fund_code: str, date: date | datetime | pd.Timestamp
+    ) -> RuleVersion | None:
+        """Return the rule version covering ``date`` for order-level audit.
+
+        Only explicit dated windows count; current-snapshot versions with
+        empty effective_from never cover historical dates.
+        """
+        code = normalize_fund_code(fund_code)
+        if isinstance(date, pd.Timestamp):
+            target = date.date()
+        elif isinstance(date, datetime):
+            target = date.date()
+        else:
+            target = date
+        for version in self.rule_versions.get(code, []):
+            if version.active_on(target):
+                return version
+        return None
 
     def is_rule_allowed(
         self,

@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-01",
+  "coverage_scope": "FROZEN_STRATEGY_CORE_PRODUCTS",
+  "products": [
+    "000008",
+    "000071",
+    "000148",
+    "000218",
+    "001512",
+    "006663",
+    "007466",
+    "016633",
+    "021778",
+    "050021",
+    "050025",
+    "160706",
+    "260102"
+  ],
+  "product_count": 13,
+  "per_product": {
+    "000008": {
+      "fund_code": "000008",
+      "inception_date": "2013-03-22",
+      "first_nav_date": "2013-03-22",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 3228,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "000071": {
+      "fund_code": "000071",
+      "inception_date": "2012-08-21",
+      "first_nav_date": "2012-08-21",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 3305,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "000148": {
+      "fund_code": "000148",
+      "inception_date": "2013-08-23",
+      "first_nav_date": "2013-08-23",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 3126,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "000218": {
+      "fund_code": "000218",
+      "inception_date": "2016-04-13",
+      "first_nav_date": "2016-04-13",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 2506,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "001512": {
+      "fund_code": "001512",
+      "inception_date": "2015-07-08",
+      "first_nav_date": "2015-07-08",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 2650,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "006663": {
+      "fund_code": "006663",
+      "inception_date": "2018-12-05",
+      "first_nav_date": "2018-12-05",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 1844,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "007466": {
+      "fund_code": "007466",
+      "inception_date": "2019-07-15",
+      "first_nav_date": "2019-07-15",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 1691,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "016633": {
+      "fund_code": "016633",
+      "inception_date": "2022-11-15",
+      "first_nav_date": "2022-11-15",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 893,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "021778": {
+      "fund_code": "021778",
+      "inception_date": "2024-08-14",
+      "first_nav_date": "2024-08-14",
+      "last_nav_date": "2026-07-24",
+      "nav_days": 470,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "050021": {
+      "fund_code": "050021",
+      "inception_date": "2011-06-10",
+      "first_nav_date": "2011-06-10",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 3670,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "050025": {
+      "fund_code": "050025",
+      "inception_date": "2012-06-14",
+      "first_nav_date": "2012-06-14",
+      "last_nav_date": "2026-07-24",
+      "nav_days": 3346,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "160706": {
+      "fund_code": "160706",
+      "inception_date": "2005-08-29",
+      "first_nav_date": "2005-08-29",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 5091,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    },
+    "260102": {
+      "fund_code": "260102",
+      "inception_date": "2005-08-29",
+      "first_nav_date": "2005-08-29",
+      "last_nav_date": "2026-07-27",
+      "nav_days": 5096,
+      "null_nav_rows": 0,
+      "termination_date": null,
+      "inception_matches_first_nav": true,
+      "termination_detected": false,
+      "event_types_with_evidence": [
+        "INCEPTION"
+      ],
+      "event_types_without_evidence": [
+        "SUSPENSION",
+        "RESUMPTION",
+        "SUBSCRIPTION_LIMIT",
+        "LIQUIDATION",
+        "MERGER",
+        "CONVERSION",
+        "SHARE_CLASS_ADDED",
+        "SHARE_CLASS_REMOVED"
+      ],
+      "coverage_status": "PIT_PARTIAL",
+      "coverage_reasons": [
+        "ANNOUNCEMENT_EVENTS_NO_HISTORICAL_SOURCE",
+        "TERMINATION_NOT_RECORDED"
+      ]
+    }
+  },
+  "summary": {
+    "inception_events_recorded": 13,
+    "termination_events_recorded": 0,
+    "products_with_inception_matching_first_nav": 13,
+    "products_pit_partial": 13,
+    "announcement_event_types_without_source": [
+      "CONVERSION",
+      "LIQUIDATION",
+      "MERGER",
+      "RESUMPTION",
+      "SHARE_CLASS_ADDED",
+      "SHARE_CLASS_REMOVED",
+      "SUBSCRIPTION_LIMIT",
+      "SUSPENSION"
+    ],
+    "lifecycle_status": "PIT_PARTIAL",
+    "label": "INCEPTION_EVIDENCE_COMPLETE; ANNOUNCEMENT_EVENT_EVIDENCE_NOT_ESTABLISHED"
+  }
+}

@@ -1,0 +1,14 @@
+﻿fund_code,event_type,event_date,source_type,evidence_note,verified_at
+000008,INCEPTION,2013-03-22,RESEARCH_DB_CATALOG,catalog inception_date 2013-03-22; first NAV row 2013-03-22; NAV coverage 3228 rows from inception with no null unit_nav,2026-08-01
+000071,INCEPTION,2012-08-21,RESEARCH_DB_CATALOG,catalog inception_date 2012-08-21; first NAV row 2012-08-21; NAV coverage 3305 rows from inception with no null unit_nav,2026-08-01
+000148,INCEPTION,2013-08-23,RESEARCH_DB_CATALOG,catalog inception_date 2013-08-23; first NAV row 2013-08-23; NAV coverage 3126 rows from inception with no null unit_nav,2026-08-01
+000218,INCEPTION,2016-04-13,RESEARCH_DB_CATALOG,catalog inception_date 2016-04-13; first NAV row 2016-04-13; NAV coverage 2506 rows from inception with no null unit_nav,2026-08-01
+001512,INCEPTION,2015-07-08,RESEARCH_DB_CATALOG,catalog inception_date 2015-07-08; first NAV row 2015-07-08; NAV coverage 2650 rows from inception with no null unit_nav,2026-08-01
+006663,INCEPTION,2018-12-05,RESEARCH_DB_CATALOG,catalog inception_date 2018-12-05; first NAV row 2018-12-05; NAV coverage 1844 rows from inception with no null unit_nav,2026-08-01
+007466,INCEPTION,2019-07-15,RESEARCH_DB_CATALOG,catalog inception_date 2019-07-15; first NAV row 2019-07-15; NAV coverage 1691 rows from inception with no null unit_nav,2026-08-01
+016633,INCEPTION,2022-11-15,RESEARCH_DB_CATALOG,catalog inception_date 2022-11-15; first NAV row 2022-11-15; NAV coverage 893 rows from inception with no null unit_nav,2026-08-01
+021778,INCEPTION,2024-08-14,RESEARCH_DB_CATALOG,catalog inception_date 2024-08-14; first NAV row 2024-08-14; NAV coverage 470 rows from inception with no null unit_nav,2026-08-01
+050021,INCEPTION,2011-06-10,RESEARCH_DB_CATALOG,catalog inception_date 2011-06-10; first NAV row 2011-06-10; NAV coverage 3670 rows from inception with no null unit_nav,2026-08-01
+050025,INCEPTION,2012-06-14,RESEARCH_DB_CATALOG,catalog inception_date 2012-06-14; first NAV row 2012-06-14; NAV coverage 3346 rows from inception with no null unit_nav,2026-08-01
+160706,INCEPTION,2005-08-29,RESEARCH_DB_CATALOG,catalog inception_date 2005-08-29; first NAV row 2005-08-29; NAV coverage 5091 rows from inception with no null unit_nav,2026-08-01
+260102,INCEPTION,2005-08-29,RESEARCH_DB_CATALOG,catalog inception_date 2005-08-29; first NAV row 2005-08-29; NAV coverage 5096 rows from inception with no null unit_nav,2026-08-01

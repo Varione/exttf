@@ -276,5 +276,80 @@
     },
     "freeze_manifest": "baseline_freeze_manifest.json",
     "forward_observation": "NOT_STARTED_T0_NOT_REGISTERED"
+  },
+  "p1_historical_truth": {
+    "completed_components": [
+      "P1-1_RULE_VERSIONING_AUDIT",
+      "P1-2_CONSERVATIVE_NAV_AVAILABILITY",
+      "P1-3_LIFECYCLE_EVENTS_TABLE",
+      "P1-4_MAPPING_EVIDENCE_AND_INDEPENDENT_VERIFICATION",
+      "P1-5_HISTORICAL_TRUTH_GATE_MACHINE_OUTPUT"
+    ],
+    "rule_versions": {
+      "path": "config/otf_rule_versions.csv",
+      "version_count": 13,
+      "source_type": "CURRENT_SNAPSHOT_ONLY",
+      "order_coverage": {
+        "total_orders": 879,
+        "covered": 0,
+        "ratio": 0.0,
+        "status": "NOT_ESTABLISHED",
+        "report": "reports/historical_truth/order_rule_version_coverage.json"
+      }
+    },
+    "nav_availability": {
+      "model_id": "DOMESTIC_T1_QDII_T2",
+      "domestic_lag_trading_days": 1,
+      "qdii_lag_trading_days": 2,
+      "qdii_codes": [
+        "000071",
+        "050025"
+      ],
+      "wired_signals": [
+        "C1_CORE_SATELLITE_MOMENTUM",
+        "C2_LOW_TURNOVER_CORE_SATELLITE",
+        "C3_LOW_TURNOVER_MOMENTUM",
+        "D1_MULTI_ASSET_TREND_DEFENSIVE",
+        "B2_LT_STATIC_EW_4ASSET"
+      ],
+      "acceptance_tests_passed": 16
+    },
+    "lifecycle": {
+      "path": "config/otf_lifecycle_events.csv",
+      "events_recorded": 13,
+      "inception_events_with_catalog_evidence": 13,
+      "termination_events": 0,
+      "products_pit_partial": 13,
+      "report": "reports/historical_truth/lifecycle_events_report.json"
+    },
+    "mapping_evidence": {
+      "products_mapped": 13,
+      "evidence_complete": 13,
+      "duplicate_family_exposure_pairs": 0,
+      "independent_sample_products": 10,
+      "independent_sample_ratio": 0.7692,
+      "independent_rows_verified": 34386,
+      "independent_match_ratio": 1.0,
+      "report": "reports/historical_truth/mapping_evidence_report.json"
+    },
+    "historical_truth_gate": {
+      "path": "reports/historical_truth/historical_truth_gate.json",
+      "gate_passed": false,
+      "research_status": "PIT_PARTIAL",
+      "failed_checks": [
+        "lifecycle_evidence_complete",
+        "order_rule_version_valid_at_submit",
+        "no_current_snapshot_backfill_of_history"
+      ],
+      "passed_checks": [
+        "signal_information_has_registered_conservative_availability",
+        "asset_mapping_official_or_verifiable_source",
+        "independent_data_sample_verified"
+      ],
+      "result_labels": [
+        "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
+        "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO"
+      ]
+    }
   }
 }

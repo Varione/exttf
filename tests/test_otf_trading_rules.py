@@ -13,9 +13,11 @@ from otf_trading_rules import (
     FundTradingRule,
     ProductRuleBook,
     RedemptionFeeTier,
+    RuleVersion,
     SubscriptionFeeTier,
     TradingRestrictionEvent,
 )
+from otf_backtest_engine import OTFBacktestEngine, OTFOrder, OrderSide, OrderStatus
 
 
 def test_holding_period_fee_tiers_are_half_open():
@@ -179,3 +181,72 @@ def test_is_rule_allowed_partial_dates():
     assert not allowed_before
     allowed_after, _ = book.is_rule_allowed("F", submit_date=date(2025, 1, 1))
     assert allowed_after
+
+
+def test_rule_version_active_on_empty_window_covers_nothing():
+    version = RuleVersion(
+        "000218", "v20260801", effective_from="", effective_to=""
+    )
+    assert not version.active_on(date(2026, 8, 1))
+    assert not version.active_on(date(2021, 1, 4))
+
+
+def test_rule_version_active_on_dated_window():
+    version = RuleVersion(
+        "000218", "v20220101",
+        effective_from="2022-01-01", effective_to="2024-12-31",
+    )
+    assert version.active_on(date(2022, 6, 1))
+    assert not version.active_on(date(2021, 12, 31))
+    assert not version.active_on(date(2025, 1, 1))
+
+
+def test_rule_version_for_selects_window_hit():
+    book = ProductRuleBook(
+        rule_versions={
+            "000218": [
+                RuleVersion(
+                    "000218", "v20220101",
+                    effective_from="2022-01-01", effective_to="2024-12-31",
+                ),
+                RuleVersion(
+                    "000218", "v20250101",
+                    effective_from="2025-01-01", effective_to="",
+                ),
+            ]
+        }
+    )
+    assert book.rule_version_for("000218", date(2023, 5, 1)).rule_version_id == "v20220101"
+    assert book.rule_version_for("000218", date(2025, 6, 1)).rule_version_id == "v20250101"
+    assert book.rule_version_for("000218", date(2021, 1, 1)) is None
+
+
+def test_from_csv_loads_rule_versions():
+    book = ProductRuleBook.from_csv()
+    version = book.rule_version_for("000218", date(2026, 8, 1))
+    assert version is not None
+    assert version.rule_version_id == "v20260801"
+    assert version.source_type == "CURRENT_SNAPSHOT"
+    assert book.rule_version_for("000218", date(2021, 1, 4)) is None
+
+
+def test_order_audit_frame_includes_rule_version_id():
+    engine = object.__new__(OTFBacktestEngine)
+    engine.product_rule_book = ProductRuleBook.from_csv()
+    engine.last_orders = [
+        OTFOrder(
+            order_id="O1",
+            side=OrderSide.SUBSCRIBE,
+            fund_code="000218",
+            signal_date=pd.Timestamp("2026-08-01"),
+            submit_date=pd.Timestamp("2026-08-03"),
+            requested_amount=1000.0,
+            status=OrderStatus.CONFIRMED,
+            confirmation_date=pd.Timestamp("2026-08-04"),
+            confirmed_nav=1.0,
+            shares_confirmed=1000.0,
+        )
+    ]
+    frame = engine.order_audit_frame()
+    assert "rule_version_id" in frame.columns
+    assert frame.iloc[0]["rule_version_id"] == "v20260801"

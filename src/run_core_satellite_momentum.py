@@ -522,6 +522,7 @@ def _run_stress(
     signal_map: dict[str, str],
     base_config: dict[str, Any],
     run_dir: Path,
+    trading_dates: pd.DatetimeIndex | None = None,
 ) -> dict[str, Any]:
     if scenario == "double_fees":
         stressed_rules = rule_book.scaled_fees(2.0)
@@ -559,7 +560,7 @@ def _run_stress(
     else:
         raise ValueError(f"unknown_c1_stress:{scenario}")
     engine = _create_engine(stressed_rules)
-    signal = CoreSatelliteMomentumSignal(growth_df)
+    signal = CoreSatelliteMomentumSignal(growth_df, trading_dates=trading_dates)
     targets, audits = _signal_targets(signal, signal_dates, signal_map)
     daily, orders, rejections, turnover, fees, extra = _run_account(engine, targets, signal_map)
     metrics = _c1_metrics(daily, orders, turnover, audits)
@@ -797,7 +798,9 @@ def _run_research() -> int:
     growth_df = schedule_engine._nav_df[
         ["fund_code", "nav_date", "daily_growth_pct", "unit_nav"]
     ].copy()
-    c1_signal = CoreSatelliteMomentumSignal(growth_df)
+    c1_signal = CoreSatelliteMomentumSignal(
+        growth_df, trading_dates=pd.to_datetime(schedule_engine._trading_dates)
+    )
     c1_targets, c1_audits = _signal_targets(c1_signal, quarterly_dates, quarterly_map)
     if c1_targets.empty:
         raise RuntimeError("C1_NO_ACCEPTED_TARGET_SIGNALS")
@@ -824,6 +827,7 @@ def _run_research() -> int:
             quarterly_map,
             config,
             run_dir,
+            trading_dates=pd.to_datetime(schedule_engine._trading_dates),
         )
         for scenario in ("double_fees", "delay_plus_one_trading_day")
     }

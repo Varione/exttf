@@ -83,9 +83,13 @@ class C3LowTurnoverMomentumSignal:
         satellite_slot_weight: float = SATELLITE_SLOT_WEIGHT,
         min_holding_quarters: int = MIN_HOLDING_QUARTERS,
         drift_threshold: float = DRIFT_THRESHOLD,
+        trading_dates: pd.DatetimeIndex | None = None,
+        qdii_codes: list[str] | None = None,
     ):
         self.growth_df = _normalise_growth_frame(growth_df)
         self.total_return_index = build_total_return_index(self.growth_df)
+        self.trading_dates = trading_dates
+        self.qdii_codes = list(qdii_codes or [])
         self.core_weights = {
             _normalise_code(code): float(weight) for code, weight in core_weights.items()
         }
@@ -130,7 +134,14 @@ class C3LowTurnoverMomentumSignal:
             row["reason"] = "NOT_IN_TOTAL_RETURN_INDEX"
             return row
 
-        series = self.total_return_index.loc[:pd.Timestamp(signal_date), code].dropna()
+        cutoff = pd.Timestamp(signal_date)
+        if self.trading_dates is not None:
+            from otf_rotation.nav_availability import available_as_of, lag_for
+
+            cutoff = available_as_of(
+                self.trading_dates, pd.Timestamp(signal_date), lag_for(code, self.qdii_codes or [])
+            )
+        series = self.total_return_index.loc[:cutoff, code].dropna()
         if len(series) < self.min_observations:
             row["reason"] = f"INSUFFICIENT_PUBLISHED_OBSERVATIONS_{self.min_observations}"
             return row
@@ -305,7 +316,14 @@ class C3LowTurnoverMomentumSignal:
         for code in codes:
             if code not in idx.columns:
                 continue
-            series = idx.loc[:pd.Timestamp(signal_date), code].dropna()
+            cutoff = pd.Timestamp(signal_date)
+            if self.trading_dates is not None:
+                from otf_rotation.nav_availability import available_as_of, lag_for
+
+                cutoff = available_as_of(
+                    self.trading_dates, pd.Timestamp(signal_date), lag_for(code, self.qdii_codes or [])
+                )
+            series = idx.loc[:cutoff, code].dropna()
             if not series.empty:
                 result[code] = float(series.iloc[-1])
         return result

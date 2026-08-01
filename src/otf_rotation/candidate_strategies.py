@@ -37,18 +37,35 @@ def _normalise_nav_frame(nav_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def latest_published_nav(
-    nav_df: pd.DataFrame, fund_code: str, date: pd.Timestamp
+    nav_df: pd.DataFrame, fund_code: str, date: pd.Timestamp, available_lag: int = 0
 ) -> tuple[float | None, pd.Timestamp | None, int]:
-    """Return the latest published NAV at or before ``date`` and its count."""
+    """Return the latest published NAV at or before ``date`` and its count.
+
+    ``available_lag`` applies a conservative availability lag in trading days
+    (domestic 1, QDII 2) when trading dates can be derived; 0 keeps the
+    legacy nav_date <= date behaviour.
+    """
     frame = _normalise_nav_frame(nav_df)
+    cutoff = pd.Timestamp(date)
+    if available_lag > 0:
+        from otf_rotation.nav_availability import available_as_of
+
+        trading_dates = _nav_dates(frame)
+        cutoff = available_as_of(trading_dates, pd.Timestamp(date), int(available_lag))
     history = frame[
         (frame["fund_code"] == _normalise_code(fund_code))
-        & (frame["nav_date"] <= pd.Timestamp(date))
+        & (frame["nav_date"] <= cutoff)
     ]
     if history.empty:
         return None, None, 0
     row = history.iloc[-1]
     return float(row["unit_nav"]), pd.Timestamp(row["nav_date"]), int(len(history))
+
+
+def _nav_dates(nav_df: pd.DataFrame) -> pd.DatetimeIndex:
+    """All distinct nav dates as a sorted datetime index (proxy trading dates)."""
+    frame = _normalise_nav_frame(nav_df)
+    return pd.DatetimeIndex(sorted(frame["nav_date"].unique()))
 
 
 def natural_drift_weights(
@@ -78,11 +95,20 @@ def natural_drift_weights(
 
 
 def _latest_navs(
-    nav_df: pd.DataFrame, fund_codes: list[str], date: pd.Timestamp
+    nav_df: pd.DataFrame,
+    fund_codes: list[str],
+    date: pd.Timestamp,
+    trading_dates: pd.DatetimeIndex | None = None,
+    qdii_codes: list[str] | None = None,
 ) -> dict[str, float]:
     values: dict[str, float] = {}
     for code in fund_codes:
-        nav, _, _ = latest_published_nav(nav_df, code, date)
+        lag = 0
+        if trading_dates is not None:
+            from otf_rotation.nav_availability import lag_for
+
+            lag = lag_for(code, qdii_codes or [])
+        nav, _, _ = latest_published_nav(nav_df, code, date, available_lag=lag)
         if nav is not None:
             values[_normalise_code(code)] = nav
     return values
@@ -116,9 +142,17 @@ class B2LTSignal:
     assets = ("160706", "000218", "001512", "260102")
     target = {code: 0.25 for code in assets}
 
-    def __init__(self, nav_df: pd.DataFrame, threshold: float = 0.05):
+    def __init__(
+        self,
+        nav_df: pd.DataFrame,
+        threshold: float = 0.05,
+        trading_dates: pd.DatetimeIndex | None = None,
+        qdii_codes: list[str] | None = None,
+    ):
         self.nav_df = _normalise_nav_frame(nav_df)
         self.threshold = float(threshold)
+        self.trading_dates = trading_dates
+        self.qdii_codes = list(qdii_codes or [])
         self.audit_rows: list[dict[str, Any]] = []
         self.reset()
 
@@ -131,7 +165,13 @@ class B2LTSignal:
 
     def __call__(self, date: pd.Timestamp) -> dict[str, float]:
         signal_date = pd.Timestamp(date)
-        current_navs = _latest_navs(self.nav_df, list(self.assets), signal_date)
+        current_navs = _latest_navs(
+            self.nav_df,
+            list(self.assets),
+            signal_date,
+            trading_dates=self.trading_dates,
+            qdii_codes=self.qdii_codes,
+        )
         drift: dict[str, float] = {}
         max_deviation = 0.0
         if self.last_accepted_target is None:
@@ -249,6 +289,8 @@ class D1Signal:
         ma_days: int = 200,
         threshold: float = 0.05,
         rule_book: Any | None = None,
+        trading_dates: pd.DatetimeIndex | None = None,
+        qdii_codes: list[str] | None = None,
     ):
         self.nav_df = _normalise_nav_frame(nav_df)
         self.rules = rules
@@ -261,6 +303,8 @@ class D1Signal:
         self.ma_days = int(ma_days)
         self.threshold = float(threshold)
         self.rule_book = rule_book
+        self.trading_dates = trading_dates
+        self.qdii_codes = list(qdii_codes or [])
         self.audit_rows: list[dict[str, Any]] = []
         self.reset()
 
@@ -271,6 +315,17 @@ class D1Signal:
         self.last_accepted_date: pd.Timestamp | None = None
         self.last_signal_audit: dict[str, Any] = {}
         self.audit_rows = []
+
+    def _cutoff_for(self, code: str, signal_date: pd.Timestamp) -> pd.Timestamp:
+        """Conservative availability cutoff for ``code`` at ``signal_date``."""
+        cutoff = pd.Timestamp(signal_date)
+        if self.trading_dates is not None:
+            from otf_rotation.nav_availability import available_as_of, lag_for
+
+            cutoff = available_as_of(
+                self.trading_dates, cutoff, lag_for(code, self.qdii_codes or [])
+            )
+        return cutoff
 
     def _evaluate_product(
         self, code: str, spec: Mapping[str, Any], signal_date: pd.Timestamp
@@ -304,7 +359,7 @@ class D1Signal:
 
         product_rows = self.nav_df[
             (self.nav_df["fund_code"] == code)
-            & (self.nav_df["nav_date"] <= signal_date)
+            & (self.nav_df["nav_date"] <= self._cutoff_for(code, signal_date))
         ]
         nav = None
         ma200 = None

@@ -720,6 +720,7 @@ def main(argv: list[str] | None = None) -> int:
         B2LT_NAME: B2LTSignal(
             schedule_engine._nav_df,
             threshold=float(config_source["b2_lt"]["rebalance_threshold_pct_points"]) / 100.0,
+            trading_dates=schedule_engine._trading_dates,
         ),
         D1_NAME: D1Signal(
             schedule_engine._nav_df,
@@ -731,6 +732,7 @@ def main(argv: list[str] | None = None) -> int:
             ma_days=int(config_source["d1"]["trend_ma_published_nav_days"]),
             threshold=float(config_source["d1"]["rebalance_threshold_pct_points"]) / 100.0,
             rule_book=rule_book,
+            trading_dates=schedule_engine._trading_dates,
         ),
     }
     metrics_by_strategy: dict[str, dict[str, Any]] = {}

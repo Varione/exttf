@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-01",
+  "scope": "FROZEN_STRATEGY_CORE_PRODUCTS",
+  "product_count": 13,
+  "products_mapped": 13,
+  "per_product_mapping_evidence": {
+    "000008": {
+      "fund_code": "000008",
+      "fund_family_id": "JIA_SHI",
+      "share_class": "A",
+      "underlying_id": "CSI500",
+      "benchmark": "中证500",
+      "asset_class": "equity_broad",
+      "asset_sleeve": "CSI500",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2013-06-06",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_000008.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "000071": {
+      "fund_code": "000071",
+      "fund_family_id": "HUA_XIA",
+      "share_class": "A",
+      "underlying_id": "HANGSENG",
+      "benchmark": "恒生指数",
+      "asset_class": "overseas_equity",
+      "asset_sleeve": "HANGSENG",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2013-06-27",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_000071.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "000148": {
+      "fund_code": "000148",
+      "fund_family_id": "YI_FANG_DA",
+      "share_class": "C",
+      "underlying_id": "CREDIT_BOND",
+      "benchmark": "中债综合指数",
+      "asset_class": "credit_bond",
+      "asset_sleeve": "CREDIT_BOND",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2013-09-27",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://cdn.efunds.com.cn/owch/data/bulletin/20260519/%E6%98%93%E6%96%B9%E8%BE%BE%E9%AB%98%E7%AD%89%E7%BA%A7%E4%BF%A1%E7%94%A8%E5%80%BA",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "000218": {
+      "fund_code": "000218",
+      "fund_family_id": "Guotai",
+      "share_class": "A",
+      "underlying_id": "GOLD",
+      "benchmark": "黄金现货价格",
+      "asset_class": "commodity",
+      "asset_sleeve": "GOLD",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2013-08-29",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_000218.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "001512": {
+      "fund_code": "001512",
+      "fund_family_id": "YI_FANG_DA",
+      "share_class": "A",
+      "underlying_id": "GOV_BOND_3_5Y",
+      "benchmark": "中债-国债3-5年总指数",
+      "asset_class": "gov_bond",
+      "asset_sleeve": "GOV_BOND_3_5Y",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2015-09-24",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://cdn.efunds.com.cn/owch/data/bulletin/20260212/%E6%98%93%E6%96%B9%E8%BE%BE%E4%B8%AD%E5%80%BA3-5%E5%B9%B4%E6%9C%9F%E5%9B%BD%E5%80%BA",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "006663": {
+      "fund_code": "006663",
+      "fund_family_id": "YI_FANG_DA",
+      "share_class": "C",
+      "underlying_id": "ULTRA_SHORT_BOND",
+      "benchmark": "中债总指数(1年以下)",
+      "asset_class": "short_term_bond",
+      "asset_sleeve": "ULTRA_SHORT_BOND",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2018-09-21",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://cdn.efunds.com.cn/owch/data/bulletin/20260519/%E6%98%93%E6%96%B9%E8%BE%BE%E5%AE%89%E6%82%A6%E8%B6%85%E7%9F%AD%E5%80%BA",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "007466": {
+      "fund_code": "007466",
+      "fund_family_id": "HUA_TAI_BAO_RUI",
+      "share_class": "A",
+      "underlying_id": "DIVIDEND",
+      "benchmark": "中证红利低波动",
+      "asset_class": "equity_dividend",
+      "asset_sleeve": "DIVIDEND",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2019-04-19",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_007466.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "016633": {
+      "fund_code": "016633",
+      "fund_family_id": "FUGUO",
+      "share_class": "A",
+      "underlying_id": "CSI1000",
+      "benchmark": "中证1000",
+      "asset_class": "equity_broad",
+      "asset_sleeve": "CSI1000",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2022-03-25",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_016633.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "021778": {
+      "fund_code": "021778",
+      "fund_family_id": "Guangfa",
+      "share_class": "F",
+      "underlying_id": "NASDAQ",
+      "benchmark": "纳斯达克100指数",
+      "asset_class": "overseas_equity",
+      "asset_sleeve": "NASDAQ",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2024-10-31",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_021778.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "050021": {
+      "fund_code": "050021",
+      "fund_family_id": "BOSI",
+      "share_class": "A",
+      "underlying_id": "CHINEXT",
+      "benchmark": "创业板指",
+      "asset_class": "equity_growth",
+      "asset_sleeve": "CHINEXT",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2009-12-04",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_050021.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "050025": {
+      "fund_code": "050025",
+      "fund_family_id": "BOSI",
+      "share_class": "A",
+      "underlying_id": "SP500",
+      "benchmark": "标普500指数",
+      "asset_class": "overseas_equity",
+      "asset_sleeve": "SP500",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2009-12-04",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_050025.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "160706": {
+      "fund_code": "160706",
+      "fund_family_id": "JIA_SHI",
+      "share_class": "A",
+      "underlying_id": "CSI300",
+      "benchmark": "沪深300",
+      "asset_class": "equity_broad",
+      "asset_sleeve": "CSI300",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2007-02-26",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_160706.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    },
+    "260102": {
+      "fund_code": "260102",
+      "fund_family_id": "INSCWIN",
+      "share_class": "A",
+      "underlying_id": "MONEY_MARKET",
+      "benchmark": "活期存款利率",
+      "asset_class": "money_market",
+      "asset_sleeve": "MONEY_MARKET",
+      "mapping_source": "fund_company_disclosure",
+      "mapping_confidence": "HIGH",
+      "effective_from": "2005-11-04",
+      "effective_to": "OPEN_ENDED",
+      "review_status": "APPROVED",
+      "source_url": "https://fundf10.eastmoney.com/jjfl_260102.html",
+      "reviewer": "system",
+      "evidence_complete": true,
+      "missing_fields": []
+    }
+  },
+  "duplicate_family_exposure_pairs": [],
+  "independent_nav_samples": [
+    {
+      "reference": "otf_mapped",
+      "overlapping_rows": 24200,
+      "products_covered": [
+        "000008",
+        "000071",
+        "000218",
+        "007466",
+        "016633",
+        "021778",
+        "050021",
+        "050025",
+        "160706"
+      ],
+      "match_ratio": 1.0,
+      "max_abs_diff": 0.0,
+      "per_product": {
+        "000008": {
+          "overlapping_rows": 3228,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "000071": {
+          "overlapping_rows": 3305,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "000218": {
+          "overlapping_rows": 2506,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "007466": {
+          "overlapping_rows": 1691,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "016633": {
+          "overlapping_rows": 893,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "021778": {
+          "overlapping_rows": 470,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "050021": {
+          "overlapping_rows": 3670,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "050025": {
+          "overlapping_rows": 3346,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "160706": {
+          "overlapping_rows": 5091,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        }
+      }
+    },
+    {
+      "reference": "otf_defensive",
+      "overlapping_rows": 10186,
+      "products_covered": [
+        "000071",
+        "006663",
+        "007466",
+        "050025"
+      ],
+      "match_ratio": 1.0,
+      "max_abs_diff": 0.0,
+      "per_product": {
+        "000071": {
+          "overlapping_rows": 3305,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "006663": {
+          "overlapping_rows": 1844,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "007466": {
+          "overlapping_rows": 1691,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        },
+        "050025": {
+          "overlapping_rows": 3346,
+          "match_ratio": 1.0,
+          "max_abs_diff": 0.0
+        }
+      }
+    }
+  ],
+  "independent_source_products_covered": [
+    "000008",
+    "000071",
+    "000218",
+    "006663",
+    "007466",
+    "016633",
+    "021778",
+    "050021",
+    "050025",
+    "160706"
+  ],
+  "independent_source_product_count": 10,
+  "summary": {
+    "mapping_evidence_complete": 13,
+    "duplicate_family_exposure_found": 0,
+    "independent_sample_products": 10,
+    "independent_sample_ratio": 0.7692,
+    "all_checks_passed": true,
+    "mapping_status": "MAPPING_EVIDENCE_COMPLETE",
+    "independent_verification_status": "SAMPLE_VERIFIED",
+    "label": "FROZEN_PRODUCT_MAPPING_EVIDENCE_COMPLETE; INDEPENDENT_NAV_SAMPLE_COVERAGE_10_OF_13"
+  }
+}

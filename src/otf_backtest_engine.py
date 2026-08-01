@@ -1155,6 +1155,14 @@ class OTFBacktestEngine:
         )
         return result
 
+    def _rule_version_for_order(self, order: OTFOrder) -> str:
+        """Resolve the dated rule version covering the order submit date."""
+        rule_book = getattr(self, "product_rule_book", None)
+        if rule_book is None or order.submit_date is None:
+            return ""
+        version = rule_book.rule_version_for(order.fund_code, order.submit_date)
+        return version.rule_version_id if version else ""
+
     def order_audit_frame(self) -> pd.DataFrame:
         rows: list[dict[str, Any]] = []
         for order in getattr(self, "last_orders", []):
@@ -1199,6 +1207,7 @@ class OTFBacktestEngine:
                     ),
                     "fee_paid": order.fee_paid,
                     "effective_fee_rate": order.effective_fee_rate,
+                    "rule_version_id": self._rule_version_for_order(order),
                     "fifo_lot_count": len(order.lot_allocations),
                     "minimum_holding_days": min(holding_days) if holding_days else None,
                     "maximum_holding_days": max(holding_days) if holding_days else None,
