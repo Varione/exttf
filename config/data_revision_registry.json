@@ -1,0 +1,58 @@
+{
+  "mechanism": "forward_data_revision",
+  "rule": "Any change to a tracked file must be recorded via --record BEFORE the data is used for forward observation. UNRECORDED_CHANGES pauses forward observation.",
+  "baseline_freeze_timestamp": "2026-08-01T12:30:00.000000+00:00",
+  "baseline_git_commit": "3bd2837",
+  "revisions": [],
+  "files": {
+    "data/processed/otf_expanded.sqlite": {
+      "role": "db_expanded",
+      "baseline_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+      "last_recorded_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+      "current_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+      "baseline_source": "freeze_manifest"
+    },
+    "data/processed/otf_mapped.sqlite": {
+      "role": "db_mapped",
+      "baseline_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
+      "last_recorded_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
+      "current_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
+      "baseline_source": "initialized_at_first_run"
+    },
+    "data/processed/etf.sqlite": {
+      "role": "db_etf",
+      "baseline_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c",
+      "last_recorded_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c",
+      "current_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c",
+      "baseline_source": "initialized_at_first_run"
+    },
+    "config/otf_product_rules.csv": {
+      "role": "rules",
+      "baseline_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
+      "last_recorded_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
+      "current_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
+      "baseline_source": "freeze_manifest"
+    },
+    "config/otf_exposure_mapping.csv": {
+      "role": "mapping",
+      "baseline_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
+      "last_recorded_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
+      "current_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
+      "baseline_source": "freeze_manifest"
+    },
+    "config/otf_walkforward.json": {
+      "role": "config",
+      "baseline_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
+      "last_recorded_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
+      "current_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
+      "baseline_source": "freeze_manifest"
+    },
+    "data/processed/execution_calendar/cn_execution_calendar.csv": {
+      "role": "calendar",
+      "baseline_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+      "last_recorded_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+      "current_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+      "baseline_source": "freeze_manifest"
+    }
+  }
+}

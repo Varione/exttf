@@ -1,0 +1,62 @@
+{
+  "strategy_key": "C3",
+  "gate_passed": false,
+  "status": "NOT_ELIGIBLE_FOR_PAPER_TRADE",
+  "forbidden_language": "tradable/verified alpha/formal paper trade candidate not permitted until all nine conditions pass",
+  "conditions": [
+    {
+      "id": 1,
+      "name": "P0 engineering gate",
+      "status": "PASS",
+      "evidence": "{\"record\": \"reports/test_regression/regression_20260801_113005.json\", \"passed\": 557, \"failed\": 0, \"all_passed\": true}"
+    },
+    {
+      "id": 2,
+      "name": "P1 historical truth gate",
+      "status": "FAIL",
+      "evidence": "lifecycle remains PIT_PARTIAL until P1 gate passes"
+    },
+    {
+      "id": 3,
+      "name": "minimum fresh sample",
+      "status": "FAIL",
+      "evidence": "{\"reason\": \"no forward decisions recorded yet\"}"
+    },
+    {
+      "id": 4,
+      "name": "forward reconciliation",
+      "status": "FAIL",
+      "evidence": "no forward decisions; run scripts/forward/validate_shadow_records.py once records exist"
+    },
+    {
+      "id": 5,
+      "name": "no frozen parameter drift",
+      "status": "PASS",
+      "evidence": "parameter_freeze_id=6bda2cf7a410050cf63686ac6521850e13d4e6f9259191f369f00cfac1109bb8"
+    },
+    {
+      "id": 6,
+      "name": "risk cost turnover rolling gate",
+      "status": "FAIL",
+      "evidence": "requires forward daily NAV and shadow orders"
+    },
+    {
+      "id": 7,
+      "name": "pre-registered incremental bar vs B2-LT",
+      "status": "FAIL",
+      "evidence": "requires concurrent B2-LT forward shadow records"
+    },
+    {
+      "id": 8,
+      "name": "double fee and execution delay stress",
+      "status": "FAIL",
+      "evidence": "requires a stress rerun of the forward sample"
+    },
+    {
+      "id": 9,
+      "name": "clean commit and repeatability",
+      "status": "PASS",
+      "evidence": "baseline commit 3bd2837"
+    }
+  ]
+}

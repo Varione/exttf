@@ -1,0 +1,15 @@
+{
+  "generated_by": "scripts/migrations/build_frozen_strategy_versions.py",
+  "git_commit": "3bd2837",
+  "freeze_timestamp": "2026-08-01T12:30:00.000000+00:00",
+  "registered": [
+    "C1",
+    "B2LT",
+    "C3",
+    "M20",
+    "C2"
+  ],
+  "freeze_content_complete": true,
+  "problems": [],
+  "output": "D:/etf/config/otf_frozen_strategy_versions.csv"
+}

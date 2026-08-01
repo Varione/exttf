@@ -275,7 +275,7 @@
       "mdd_pct": -10.0238
     },
     "freeze_manifest": "baseline_freeze_manifest.json",
-    "forward_observation": "NOT_STARTED_T0_NOT_REGISTERED"
+    "forward_observation": "PENDING_T0_CALENDAR_EXTENSION"
   },
   "p1_historical_truth": {
     "completed_components": [
@@ -350,6 +350,86 @@
         "RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT",
         "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO"
       ]
+    }
+  },
+  "p2_frozen_forward": {
+    "completed_components": [
+      "P2-A_M20_STANDARDIZED_ARTIFACTS",
+      "P2-B_FROZEN_VERSION_REGISTRY",
+      "P2-C_T0_REGISTRY",
+      "P2-D_ARCHIVE_MARKERS",
+      "P2-E_FORWARD_DATA_REVISION",
+      "P2-F_SHADOW_SCHEMA_AND_ORDER_AUDIT",
+      "P2-G_FORWARD_UPGRADE_GATE_FRAMEWORK"
+    ],
+    "frozen_versions": {
+      "path": "config/otf_frozen_strategy_versions.csv",
+      "generator": "scripts/migrations/build_frozen_strategy_versions.py",
+      "strategies": [
+        "B2LT",
+        "C1",
+        "C3",
+        "M20",
+        "C2"
+      ],
+      "freeze_content_complete": true,
+      "report": "reports/historical_truth/frozen_strategy_versions_report.json"
+    },
+    "archived_lines": [
+      "reports/strategy_research/core_satellite_low_turnover/low_turnover_core_satellite_20260801_115521/ARCHIVED.json",
+      "reports/strategy_research/s1_experiment/ARCHIVED.json",
+      "reports/strategy_research/s1_s2_experiment/ARCHIVED.json"
+    ],
+    "t0_registry": {
+      "path": "config/otf_t0_registry.json",
+      "generator": "scripts/migrations/build_t0_registry.py",
+      "t0_status": "PENDING_CALENDAR_EXTENSION",
+      "baseline_data_cutoff": "2026-07-27",
+      "note": "rerun generator after data refresh to auto-register true T0"
+    },
+    "data_revision": {
+      "path": "config/data_revision_registry.json",
+      "tracked_files": 7,
+      "verify_status": "CLEAN",
+      "rule": "any change to tracked data must be recorded before forward use"
+    },
+    "shadow_observation": {
+      "schema": "config/forward_shadow_schema.json",
+      "validator": "scripts/forward/validate_shadow_records.py",
+      "record_root": "reports/forward_shadow",
+      "status": "NOT_STARTED_T0_PENDING",
+      "min_fresh_sample": {
+        "fresh_trading_days": 252,
+        "quarterly_min_decisions": 4,
+        "monthly_min_decisions": 12
+      }
+    },
+    "forward_upgrade_gate": {
+      "script": "scripts/forward/forward_upgrade_gate.py",
+      "conditions": 9,
+      "gate_passed": false,
+      "status": "NOT_ELIGIBLE_FOR_PAPER_TRADE",
+      "sample": "reports/forward_gate/C3_forward_upgrade_gate.json"
+    },
+    "m20_frozen_observation": {
+      "run_id": "m20_frozen_observation_20260801_152304",
+      "status": "FROZEN_OBSERVATION",
+      "gate_passed": false,
+      "failed_checks": [
+        "mdd",
+        "annualized_cost_drag",
+        "annual_bilateral_turnover",
+        "worst_two_year_cagr",
+        "rules_gate",
+        "mapping_gate",
+        "confirmed_turnover"
+      ],
+      "artifact_validation_passed": true,
+      "signal_timeline_audit": {
+        "rows": 104,
+        "all_submit_after_signal_close": true,
+        "model": "ETF_CLOSE_OBSERVABLE_AT_SIGNAL_DATE_SUBMIT_NEXT_OTF_DAY"
+      }
     }
   }
 }

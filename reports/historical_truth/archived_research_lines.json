@@ -1,0 +1,59 @@
+{
+  "mechanism": "archived_research_lines",
+  "rule": "archived lines are read-only diagnostics; ARCHIVED_PARAMETER_SEARCH_FORBIDDEN; forward observation applies only to frozen versions in config/otf_frozen_strategy_versions.csv",
+  "archived_at": "2026-08-01",
+  "archives": {
+    "reports/strategy_research/core_satellite_low_turnover/low_turnover_core_satellite_20260801_115521/ARCHIVED.json": {
+      "archived": true,
+      "archived_at": "2026-08-01",
+      "strategy_key": "C2",
+      "strategy_name": "C2_LOW_TURNOVER_CORE_SATELLITE",
+      "archive_reason": "C2 failed the candidate upgrade gate and is kept only as a diagnostic low turnover control. Per planning P2-1 it is archived: no further parameter tuning, no reuse in forward observation.",
+      "decision": "ARCHIVED_PARAMETER_SEARCH_FORBIDDEN",
+      "rules": [
+        "No parameter modification or re-tuning of this strategy line.",
+        "Historical results may be read for diagnostics only.",
+        "New parameter search requires a new strategy key and a new freeze."
+      ],
+      "freeze_registry_ref": "config/otf_frozen_strategy_versions.csv (strategy_key=C2)",
+      "evidence": [
+        "reports/strategy_research/core_satellite_low_turnover/low_turnover_core_satellite_20260801_115521/C2_LOW_TURNOVER_CORE_SATELLITE/gate_result.json",
+        "reports/latest_research_status.json (run_registry)"
+      ]
+    },
+    "reports/strategy_research/s1_experiment/ARCHIVED.json": {
+      "archived": true,
+      "archived_at": "2026-08-01",
+      "strategy_key": "S1_LEGACY_EXPLORATION",
+      "archive_reason": "Legacy exploratory experiment (strategy search line S1/S2) superseded by the frozen research baseline. Kept for read-only diagnostics; not a candidate and not eligible for forward observation.",
+      "decision": "ARCHIVED_PARAMETER_SEARCH_FORBIDDEN",
+      "rules": [
+        "No parameter modification or re-tuning of this research line.",
+        "Historical results may be read for diagnostics only.",
+        "Forward shadow observation applies only to frozen versions registered in config/otf_frozen_strategy_versions.csv."
+      ],
+      "freeze_registry_ref": "config/otf_frozen_strategy_versions.csv",
+      "evidence": [
+        "reports/strategy_research/s1_experiment/s1_manifest.json",
+        "reports/strategy_research/s1_experiment/s1_summary.csv"
+      ]
+    },
+    "reports/strategy_research/s1_s2_experiment/ARCHIVED.json": {
+      "archived": true,
+      "archived_at": "2026-08-01",
+      "strategy_key": "S1_S2_LEGACY_EXPLORATION",
+      "archive_reason": "Legacy exploratory experiment superseded by the frozen research baseline. Read-only diagnostics only; not a candidate and not eligible for forward observation.",
+      "decision": "ARCHIVED_PARAMETER_SEARCH_FORBIDDEN",
+      "rules": [
+        "No parameter modification or re-tuning of this research line.",
+        "Historical results may be read for diagnostics only.",
+        "Forward shadow observation applies only to frozen versions registered in config/otf_frozen_strategy_versions.csv."
+      ],
+      "freeze_registry_ref": "config/otf_frozen_strategy_versions.csv",
+      "evidence": [
+        "reports/strategy_research/s1_s2_experiment/s1_s2_manifest.json",
+        "reports/strategy_research/s1_s2_experiment/s1_s2_summary.csv"
+      ]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "account_mode": "FROZEN_PARAMETER_CONTINUOUS_OOS",
+  "strategy_name": "M20_Mapped_Fund_Trend",
+  "variant": "M20_Top10_Trend",
+  "params": {
+    "rebalance_every_etf_days": 20,
+    "n_hold": 10,
+    "max_per_class": 3,
+    "use_trend": true,
+    "deduplicate_exposure": false,
+    "max_pair_correlation": null,
+    "target_volatility": null,
+    "momentum_weights": {
+      "short_60d": 0.5,
+      "mid_120d": 0.3,
+      "long_252d": 0.2
+    },
+    "trend_ma_days": 200,
+    "volatility_window_days": 60,
+    "min_history_days": 60
+  },
+  "requested_oos_period": [
+    "2018-01-01",
+    "2026-07-27"
+  ],
+  "rule_scenario": "CURRENT_SNAPSHOT_CONSERVATIVE_EXECUTION_SCENARIO",
+  "historical_rule_status": "NOT_ESTABLISHED"
+}

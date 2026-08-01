@@ -1,0 +1,12 @@
+{
+  "t0_date": null,
+  "t0_status": "PENDING_CALENDAR_EXTENSION",
+  "baseline_freeze_timestamp": "2026-08-01T12:30:00.000000+00:00",
+  "baseline_git_commit": "3bd2837",
+  "data_cutoff_date": "2026-07-27",
+  "execution_calendar_last_date": "2026-07-27",
+  "execution_calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+  "candidate_next_business_day": "2026-07-28",
+  "rule_reference": "planning P2-2: T0 is the first available execution trading day after the clean baseline freeze; no backfitting with post-T0 data; modifications generate new versions; data revisions must be recorded; forward uses then-visible data and then-rules.",
+  "note": "Execution calendar and NAV data end at the baseline cutoff; no post-cutoff execution day exists yet. Rerun this script after a data refresh to auto-register the true T0. Non-weekend estimate is 2026-07-28 but the true T0 must come from the consensus calendar."
+}

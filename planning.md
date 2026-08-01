@@ -469,11 +469,12 @@ P3 只有在 P0、P1 完成并取得首个前向检查点后才允许启动。�
 
 ### P2 新鲜 OOS
 
-- [ ] B2-LT、C1、C3、M20 冻结版本登记；
-- [ ] C2 和旧失败研究归档并停止调参；
-- [ ] T0 自动登记；
-- [ ] 前向数据 revision 机制建立；
-- [ ] 前向影子账户与订单审计建立；
+- [x] B2-LT、C1、C3、M20 冻结版本登记（`config/otf_frozen_strategy_versions.csv`，生成脚本 `scripts/migrations/build_frozen_strategy_versions.py`，9 项冻结内容完整）；
+- [x] C2 和旧失败研究归档并停止调参（C2、s1_experiment、s1_s2_experiment 写入 `ARCHIVED.json`，决策 `ARCHIVED_PARAMETER_SEARCH_FORBIDDEN`）；
+- [x] T0 自动登记（`config/otf_t0_registry.json`；数据截止 2026-07-27 与执行日历末行一致，当前 `PENDING_CALENDAR_EXTENSION`，数据刷新后重跑脚本自动升级为 REGISTERED）；
+- [x] 前向数据 revision 机制建立（`config/data_revision_registry.json` + `scripts/migrations/record_data_revision.py`，7 个数据文件哈希跟踪，当前 CLEAN）；
+- [x] 前向影子账户与订单审计建立（`config/forward_shadow_schema.json` + `scripts/forward/validate_shadow_records.py`，决策/订单/日度净值勾稽链）；
+- [x] 前向升级 Gate 框架建立（`scripts/forward/forward_upgrade_gate.py`，9 条件全部接线，当前诚实输出 NOT_ELIGIBLE_FOR_PAPER_TRADE）；
 - [ ] 63 日阶段审核完成；
 - [ ] 252 日正式前向审核完成。
 

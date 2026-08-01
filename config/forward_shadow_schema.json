@@ -1,0 +1,48 @@
+{
+  "mechanism": "forward_shadow_observation",
+  "rule_reference": "planning P2-3: forward phase is research observation only, no real orders; every decision records the data snapshot hash visible at the time, signal observation time, target weights, simulated submit/confirm/value dates, matched rule version, estimated and verifiable actual fees, rejections/purchase limits/deferrals, target vs actual simulated holding deviation, and daily NAV with attribution.",
+  "min_fresh_sample": {
+    "fresh_trading_days": 252,
+    "quarterly_min_decisions": 4,
+    "monthly_min_decisions": 12,
+    "no_frozen_parameter_change": true,
+    "must_span_risk_regime_else_report_only": true
+  },
+  "record_root": "reports/forward_shadow",
+  "decision_file": {
+    "name": "decisions/<YYYY-MM-DD>_<strategy_key>_decision.json",
+    "required_fields": {
+      "decision_date": "ISO date of the simulated decision",
+      "strategy_key": "registry key from config/otf_frozen_strategy_versions.csv",
+      "parameter_freeze_id": "frozen parameter set id used for this decision",
+      "data_snapshot_sha256": "hash of the data snapshot visible at signal observation time",
+      "signal_observed_at": "ISO timestamp when the signal was observed",
+      "target_weights": "dict of fund_code to target weight summing to 1",
+      "submit_date": "simulated subscription/redemption submit date",
+      "confirm_date": "simulated confirmation date",
+      "value_date": "simulated value/accounting date",
+      "rule_version_id": "trading rule version matched on submit date",
+      "estimated_fees": "number, estimated fees for this decision",
+      "actual_fees": "number, verifiable actual fees from shadow order records",
+      "rejections": "list of rejection events",
+      "purchase_limits": "list of purchase limit events",
+      "deferrals": "list of deferral events",
+      "target_vs_actual_deviation": "max absolute weight deviation target vs actual simulated holdings"
+    },
+    "constraints": {
+      "target_weight_sum": 1.0,
+      "target_weight_tolerance": 0.001,
+      "submit_after_signal": true,
+      "confirm_after_or_equal_submit": true,
+      "value_after_or_equal_confirm": true
+    }
+  },
+  "daily_nav_file": {
+    "name": "daily_nav.csv",
+    "columns": ["date", "strategy_key", "nav", "daily_return", "attribution_note"]
+  },
+  "shadow_orders_file": {
+    "name": "shadow_orders.csv",
+    "columns": ["order_id", "decision_date", "strategy_key", "fund_code", "side", "amount", "fee", "submit_date", "confirm_date", "value_date", "status"]
+  }
+}
