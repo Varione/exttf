@@ -75,9 +75,35 @@ class TestT0Registry:
         path = ROOT / "config" / "otf_t0_registry.json"
         assert path.exists()
         reg = json.loads(path.read_text(encoding="utf-8"))
-        assert reg["t0_status"] in {"REGISTERED", "PENDING_CALENDAR_EXTENSION"}
-        assert reg["data_cutoff_date"] == "2026-07-27"
+        assert reg["t0_status"] in {
+            "REGISTERED",
+            "PENDING_CALENDAR_EXTENSION",
+            "PENDING_POST_FREEZE_OBSERVATION",
+        }
+        assert reg["baseline_data_cutoff"] == "2026-07-27"
         assert reg["baseline_git_commit"]
+        assert reg["baseline_freeze_local_date"] == "2026-08-01"
+
+    def test_t0_is_never_before_freeze_time(self):
+        """T0 must be strictly after the freeze completion time (P2-2)."""
+        path = ROOT / "config" / "otf_t0_registry.json"
+        reg = json.loads(path.read_text(encoding="utf-8"))
+        if reg["t0_status"] == "REGISTERED":
+            assert reg["t0_date"] > reg["baseline_freeze_local_date"], (
+                "T0 must be after the freeze completion date"
+            )
+        assert reg["t0_date"] is None or reg["t0_date"] > "2026-08-01"
+
+    def test_backfill_window_classified(self):
+        """2026-07-28..07-31 are backfilled, never fresh forward OOS."""
+        path = ROOT / "config" / "otf_t0_registry.json"
+        reg = json.loads(path.read_text(encoding="utf-8"))
+        window = reg.get("post_freeze_backfill_window")
+        if window is None:
+            pytest.skip("no backfill window recorded")
+        assert window["classification"] == "POST_FREEZE_BACKFILLED_VALIDATION_WINDOW"
+        assert window["start"] <= "2026-07-28"
+        assert window["end_exclusive"] > "2026-07-31"
 
     def test_rerun_is_idempotent(self):
         result = _run_script("scripts/migrations/build_t0_registry.py")
@@ -85,7 +111,7 @@ class TestT0Registry:
         reg = json.loads(
             (ROOT / "config" / "otf_t0_registry.json").read_text(encoding="utf-8")
         )
-        assert reg["data_cutoff_date"] == "2026-07-27"
+        assert reg["baseline_data_cutoff"] == "2026-07-27"
 
 
 class TestDataRevision:

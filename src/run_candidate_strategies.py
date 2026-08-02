@@ -353,7 +353,14 @@ def aggregate_candidate_status(
     gates: dict[str, dict[str, Any]],
     decisions: dict[str, dict[str, Any]],
 ) -> tuple[str, list[str], list[str]]:
-    """Aggregate non-baseline candidates without requiring every candidate to pass."""
+    """Aggregate non-baseline candidates without requiring every candidate to pass.
+
+    Naming corrected on 2026-08-02 audit: with the historical truth Gate
+    still failing, no run may claim any *_PAPER_TRADE_CANDIDATE status. A
+    partially selected run is a frozen observation control; a fully selected
+    run is at most a retrospective baseline upgrade, never a paper trade
+    candidate.
+    """
     candidate_names = (B2LT_NAME, D1_NAME)
     selected = [
         name
@@ -365,9 +372,9 @@ def aggregate_candidate_status(
     if not selected:
         status = "OOS_GATE_FAILED"
     elif len(selected) < len(candidate_names):
-        status = "PARTIAL_PAPER_TRADE_CANDIDATE"
+        status = "FROZEN_OBSERVATION_CONTROL"
     else:
-        status = "PAPER_TRADE_CANDIDATE"
+        status = "RETROSPECTIVE_BASELINE_UPGRADE"
     return status, selected, rejected
 
 
@@ -381,7 +388,7 @@ def apply_candidate_baseline_only_correction(
     """Apply the explicit derived-decision correction for the old candidate run."""
     if run_id != "candidate_20260729_141050":
         return (
-            "PARTIAL_PAPER_TRADE_CANDIDATE" if selected_candidates else "OOS_GATE_FAILED",
+            "FROZEN_OBSERVATION_CONTROL" if selected_candidates else "OOS_GATE_FAILED",
             list(selected_candidates),
             list(rejected_candidates),
             decisions,
@@ -877,7 +884,7 @@ def main(argv: list[str] | None = None) -> int:
         test_result,
     )
     print(json.dumps(candidate_status, ensure_ascii=False, indent=2, default=str))
-    return 0 if status in {"PAPER_TRADE_CANDIDATE", "OOS_GATE_FAILED"} else 3
+    return 0 if status in {"RETROSPECTIVE_BASELINE_UPGRADE", "OOS_GATE_FAILED"} else 3
 
 
 if __name__ == "__main__":

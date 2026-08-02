@@ -133,7 +133,7 @@ def main() -> int:
     manifest = _load_json(MANIFEST)
     status = _load_json(STATUS_SOURCE)
 
-    p0 = manifest.get("test_result", {})
+    p0 = status.get("test_result", {}) or manifest.get("test_result", {})
     p0_passed = bool(
         p0.get("passed") or p0.get("regression_passed")
         or (p0.get("passed_checks") and p0.get("failed_checks") == 0)

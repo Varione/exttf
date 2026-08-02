@@ -38,6 +38,9 @@ BATCHES: list[list[str]] = [
         "tests/test_signal_timing.py",
         "tests/test_research_status.py",
         "tests/test_c3_runner.py",
+        "tests/test_nav_availability.py",
+        "tests/test_p2_forward_mechanisms.py",
+        "tests/test_nav_refresh_incremental.py",
     ],
     ["tests/test_unified_experiment.py"],
     [

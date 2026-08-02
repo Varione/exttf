@@ -246,7 +246,13 @@ class TestB2LTBundleIntegrity:
         assert b2lt_metrics["fee_reconciliation"]["confirmed_order_count"] != 63
 
     def test_b2lt_input_hashes_cross_check(self):
-        """Requirement #6: B2LT input_hashes db/rules/mapping must match C3 facts."""
+        """Requirement #6: B2LT input_hashes must match the baseline freeze.
+
+        The bundle is a frozen artifact: its db/rules/mapping fingerprints must
+        equal the baseline freeze manifest snapshot, not the current (possibly
+        revised) inputs. Post-freeze revisions are tracked by the data revision
+        registry instead.
+        """
         import run_c3_low_turnover_momentum as runner
         from otf_rotation.experiment_artifacts import sha256_file
         import json
@@ -255,16 +261,13 @@ class TestB2LTBundleIntegrity:
         assert b2lt_input_hashes_path.exists()
         b2lt_hashes = json.loads(b2lt_input_hashes_path.read_text(encoding="utf-8"))
 
+        manifest = json.loads(
+            (runner.ROOT / "baseline_freeze_manifest.json").read_text(encoding="utf-8")
+        )
+        snapshot = manifest["data_snapshot"]
         for key in ("db_sha256", "rules_sha256", "mapping_sha256"):
-            c3_hash = sha256_file(str(runner.ROOT / runner.DB_PATH)) if key == "db_sha256" else None
-            if key == "db_sha256":
-                assert c3_hash == b2lt_hashes[key], f"{key} mismatch between C3 DB and B2LT bundle"
-            elif key == "rules_sha256":
-                c3_rules_hash = sha256_file(str(runner.ROOT / runner.RULES_PATH))
-                assert c3_rules_hash == b2lt_hashes[key], f"{key} mismatch"
-            elif key == "mapping_sha256":
-                c3_map_hash = sha256_file(str(runner.ROOT / runner.MAPPING_PATH))
-                assert c3_map_hash == b2lt_hashes[key], f"{key} mismatch"
+            assert key in b2lt_hashes, f"{key} missing in B2LT bundle"
+            assert snapshot[key] == b2lt_hashes[key], f"{key} mismatch between baseline freeze and B2LT bundle"
 
 
 class TestMarketStatesAudit:

@@ -11,7 +11,14 @@ Status enum:
 - EXPERIMENT_INVALID
 - OOS_NOT_RUN
 - OOS_GATE_FAILED
-- PAPER_TRADE_CANDIDATE
+- FROZEN_OBSERVATION_CONTROL
+- RETROSPECTIVE_BASELINE_UPGRADE
+
+Naming note (2026-08-02 audit): *_PAPER_TRADE_CANDIDATE statuses are no
+longer emitted while the historical truth Gate fails. A partially selected
+candidate run is a FROZEN_OBSERVATION_CONTROL; a fully selected run is at
+most a RETROSPECTIVE_BASELINE_UPGRADE. Paper trade candidacy requires the
+forward upgrade Gate (9 conditions) to pass first.
 """
 
 from __future__ import annotations

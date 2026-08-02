@@ -492,19 +492,25 @@ def _run_research() -> int:
         )
     b2lt_metrics = json.loads(b2lt_metrics_path.read_text(encoding="utf-8"))
 
-    # Cross-check B2LT input_hashes against C3 facts (requirement #6)
+    # Cross-check B2LT input_hashes against the baseline freeze (requirement #6)
+    # The bundle is a frozen artifact: its fingerprints must equal the baseline
+    # freeze manifest, NOT the current (possibly revised) inputs. Current-input
+    # changes are legitimate only when recorded in the data revision registry,
+    # which is verified separately before forward observation.
     b2lt_input_hashes_path = B2LT_BUNDLE_DIR / "input_hashes.json"
     if not b2lt_input_hashes_path.exists():
         raise RuntimeError(f"B2LT_INPUT_HASHES_NOT_FOUND:{b2lt_input_hashes_path}")
     b2lt_input_hashes_sha = sha256_file(str(b2lt_input_hashes_path))
     b2lt_input_hashes = json.loads(b2lt_input_hashes_path.read_text(encoding="utf-8"))
 
+    manifest = json.loads((ROOT / "baseline_freeze_manifest.json").read_text(encoding="utf-8"))
+    snapshot = manifest["data_snapshot"]
     for key in ("db_sha256", "rules_sha256", "mapping_sha256"):
-        if key not in facts["input_hashes"] or key not in b2lt_input_hashes:
+        if key not in snapshot or key not in b2lt_input_hashes:
             raise RuntimeError(f"B2LT_INPUT_HASH_KEY_MISSING:{key}")
-        if facts["input_hashes"][key] != b2lt_input_hashes[key]:
+        if snapshot[key] != b2lt_input_hashes[key]:
             raise RuntimeError(
-                f"B2LT_INPUT_HASH_MISMATCH:{key}:c3={facts['input_hashes'][key]},b2lt={b2lt_input_hashes[key]}"
+                f"B2LT_INPUT_HASH_MISMATCH:{key}:baseline={snapshot[key]},b2lt={b2lt_input_hashes[key]}"
             )
 
     # Record B2LT bundle reference in facts for auditability

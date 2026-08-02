@@ -227,7 +227,7 @@ def test_candidate_status_selects_passing_candidate_independently():
         D1_NAME: {"relative_upgrade_check_passed": True},
     }
     status, selected, rejected = aggregate_candidate_status(gates, decisions)
-    assert status == "PARTIAL_PAPER_TRADE_CANDIDATE"
+    assert status == "FROZEN_OBSERVATION_CONTROL"
     assert selected == [B2LT_NAME]
     assert rejected == [D1_NAME]
 

@@ -67,7 +67,7 @@
     "C1_Core_Satellite_Momentum": "FAIL",
     "C2_Low_Turnover_Core_Satellite": "FAIL",
     "C3_Low_Turnover_Momentum": "FAIL",
-    "M20_Candidate": "PARTIAL_PAPER_TRADE_CANDIDATE"
+    "M20_Candidate": "FROZEN_OBSERVATION_CONTROL"
   },
   "restrictions": {
     "parameter_search": "FORBIDDEN_ALL_PARAMETERS_FROZEN",

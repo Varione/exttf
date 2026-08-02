@@ -118,7 +118,7 @@ def build_cn_execution_calendar(
     primary_max = pd.Timestamp(primary_dates.max())
     if primary_max != EXPECTED_PRIMARY_MAX_DATE:
         raise RuntimeError(f"CN_EXECUTION_CALENDAR_PRIMARY_MAX_UNEXPECTED:{primary_max.date()}")
-    ext_end = pd.Timestamp(extension_end) if extension_end is not None else pd.Timestamp("2026-07-27")
+    ext_end = pd.Timestamp(extension_end) if extension_end is not None else pd.Timestamp("2026-07-31")
     audit, consensus_dates = _consensus_dates(otf_db_path, extension_codes, EXPECTED_EXTENSION_START, ext_end)
     extension_codes = tuple(str(code).zfill(6) for code in extension_codes)
     if consensus_dates.empty:

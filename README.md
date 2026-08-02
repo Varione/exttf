@@ -100,13 +100,13 @@ ETF 生命周期状态目前是 `PIT_PARTIAL`。场外数据来源为 AkShare / 
 & 'D:\miniconda\envs\agents\python.exe' -m pytest -q -W error::FutureWarning
 ```
 
-2026-08-01 全量回归基线（唯一状态源见 `reports/latest_research_status.json` 与 `reports/test_regression/regression_20260801_113005.json`）：
+2026-08-02 全量回归基线（唯一状态源见 `reports/latest_research_status.json` 与 `reports/test_regression/regression_20260802_013337.json`）：
 
 ```text
-557 passed, 0 failed, 0 errors, 0 warnings (37 个测试文件)
+601 passed, 0 failed, 0 errors, 0 warnings (40 个测试文件)
 ```
 
-历史测试记录（230/401/416/426 passed 等）仅用于追溯，不再作为当前测试结论。
+历史测试记录（557/230/401/416/426 passed 等）仅用于追溯，不再作为当前测试结论。
 
 ## 运行统一实验
 

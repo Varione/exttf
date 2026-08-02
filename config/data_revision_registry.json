@@ -3,20 +3,63 @@
   "rule": "Any change to a tracked file must be recorded via --record BEFORE the data is used for forward observation. UNRECORDED_CHANGES pauses forward observation.",
   "baseline_freeze_timestamp": "2026-08-01T12:30:00.000000+00:00",
   "baseline_git_commit": "3bd2837",
-  "revisions": [],
+  "revisions": [
+    {
+      "recorded_at": "2026-08-02T07:50:27",
+      "reason": "2026-08-02 NAV refresh: otf_expanded +26999 rows, otf_mapped +712 rows (provider to 2026-07-31); execution calendar extended 2026-07-27 to 2026-07-31 (consensus 4/4); frozen pool unchanged, existing rows never overwritten",
+      "git_commit": "972e69b",
+      "changes": {
+        "data/processed/otf_expanded.sqlite": {
+          "role": "db_expanded",
+          "old_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+          "new_sha256": "e6f6c8da4d694d339ebe21eed83cccf34bf51d499ddc748e6186bebf688e291f"
+        },
+        "data/processed/otf_mapped.sqlite": {
+          "role": "db_mapped",
+          "old_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
+          "new_sha256": "ba83c7744651ec005a8fd3fa0dc43270120b24eebf086361516a975f1c357961"
+        },
+        "data/processed/etf.sqlite": {
+          "role": "db_etf",
+          "old_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c",
+          "new_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c"
+        },
+        "config/otf_product_rules.csv": {
+          "role": "rules",
+          "old_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
+          "new_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98"
+        },
+        "config/otf_exposure_mapping.csv": {
+          "role": "mapping",
+          "old_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
+          "new_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251"
+        },
+        "config/otf_walkforward.json": {
+          "role": "config",
+          "old_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
+          "new_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4"
+        },
+        "data/processed/execution_calendar/cn_execution_calendar.csv": {
+          "role": "calendar",
+          "old_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+          "new_sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d"
+        }
+      }
+    }
+  ],
   "files": {
     "data/processed/otf_expanded.sqlite": {
       "role": "db_expanded",
       "baseline_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
-      "last_recorded_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
-      "current_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+      "last_recorded_sha256": "e6f6c8da4d694d339ebe21eed83cccf34bf51d499ddc748e6186bebf688e291f",
+      "current_sha256": "e6f6c8da4d694d339ebe21eed83cccf34bf51d499ddc748e6186bebf688e291f",
       "baseline_source": "freeze_manifest"
     },
     "data/processed/otf_mapped.sqlite": {
       "role": "db_mapped",
       "baseline_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
-      "last_recorded_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
-      "current_sha256": "470405e596f1f8739f0d2ea1bcb26921e54ce3be6c914f394e0f8905b655f1ce",
+      "last_recorded_sha256": "ba83c7744651ec005a8fd3fa0dc43270120b24eebf086361516a975f1c357961",
+      "current_sha256": "ba83c7744651ec005a8fd3fa0dc43270120b24eebf086361516a975f1c357961",
       "baseline_source": "initialized_at_first_run"
     },
     "data/processed/etf.sqlite": {
@@ -50,8 +93,8 @@
     "data/processed/execution_calendar/cn_execution_calendar.csv": {
       "role": "calendar",
       "baseline_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
-      "last_recorded_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
-      "current_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+      "last_recorded_sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d",
+      "current_sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d",
       "baseline_source": "freeze_manifest"
     }
   }

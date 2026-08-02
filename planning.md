@@ -6,25 +6,27 @@
 
 ### 0. 当前状态与审核基线
 
-截至 2026-08-01，项目已经完成 ETF 数据、场外基金映射、产品规则、执行日历、FIFO 申赎、连续账户、候选策略、压力测试、实验产物验证和收益归因等主要基础设施建设。当前问题已经从“功能是否存在”转变为“工程基线是否已封版、历史数据是否真实、是否存在真正未见样本”。
+截至 2026-08-02，项目已经完成 ETF 数据、场外基金映射、产品规则、执行日历、FIFO 申赎、连续账户、候选策略、压力测试、实验产物验证、收益归因和前向研究工具链等主要基础设施建设。冻结基线（2026-08-01）与 8 月 2 日数据修订均已记录。当前问题已经从“功能是否存在”转变为“历史证据覆盖是否补齐、合法 T0 是否启动、前向影子观察是否开始”。
 
 当前统一状态为：
 
 ```text
-ENGINEERING_BASELINE_FROZEN_20260801
-LATEST_STATUS_SOURCE_UPDATED_20260801
-FULL_REGRESSION_RECORDED_557_PASSED
-C3_REFINALIZED_20260801
-HISTORICAL_TRUTH_NOT_ESTABLISHED
-FRESH_OOS_NOT_STARTED
+BASELINE_FREEZE_COMPLETED
+POST_FREEZE_DATA_REFRESH_RECORDED
+CURRENT_WORKTREE_DIRTY
+CURRENT_FULL_REGRESSION_STALE
+HISTORICAL_TRUTH_GATE_FAILED
+T0_REGISTRATION_REQUIRES_CORRECTION
+FORWARD_SHADOW_NOT_STARTED
 NO_PAPER_TRADE_CANDIDATE
-STRATEGY_PARAMETER_SEARCH_FROZEN
 ```
 
 已确认的事实：
 
-- `reports/latest_research_status.json` 为唯一状态源，已覆盖全部研究并指向冻结重跑后的 run_id（`walkforward_20260801_121725` 等），引用全量回归记录 `reports/test_regression/regression_20260801_113005.json`（557 passed）；
+- `reports/latest_research_status.json` 为唯一状态源，已覆盖全部研究并指向冻结重跑后的 run_id（`walkforward_20260801_121725` 等）；2026-08-02 全量回归记录 `reports/test_regression/regression_20260802_013337.json`（601 passed，40 个测试文件），覆盖当前全部测试；
 - 工程基线已在干净 commit `3bd2837` 上完成冻结重跑（WF/C1/C2/C3/M20/归因），输入哈希与封版前完全一致，产物 `baseline_freeze_manifest.json` 已生成；
+- 2026-08-02 完成数据增量刷新并写入 `config/data_revision_registry.json`（otf_expanded 新增 26,999 行、otf_mapped 新增 712 行、执行日历扩展至 2026-07-31）；7 月 28 日至 7 月 31 日属于事后回填，标记为 `POST_FREEZE_BACKFILLED_VALIDATION_WINDOW`，不得计入新鲜 OOS；
+- T0 定义修正（2026-08-02 审核）：T0 必须是严格晚于冻结完成时间（2026-08-01）且数据按前向流程采集的执行交易日；7 月 28 日早于冻结时间，不能作为 T0；当前 `config/otf_t0_registry.json` 为 `PENDING_CALENDAR_EXTENSION`，待日历扩展到冻结时间之后且首个前向日有数据时自动登记；
 - 在完成本计划 P0 和 P1 前，禁止新增 C4/C5、重新搜索动量周期、修改 Gate 门槛或继续扩展 ML/RL。
 
 ---
@@ -75,14 +77,15 @@ D:\miniconda\envs\agents\python.exe
 D:\miniconda\envs\agents\python.exe -m pytest -q -W error::FutureWarning
 ```
 
-3. 测试必须覆盖当前全部 37 个测试文件，重点包括：
+3. 测试必须覆盖当前全部 40 个测试文件，重点包括：
    - C3 信号与 runner；
    - artifact validator；
    - execution calendar；
    - 节假日份额调整与跨基金节假日收益归集；
    - metadata consistency；
    - strategy attribution；
-   - 连续账户、FIFO、费用、换手和未来数据隔离。
+   - 连续账户、FIFO、费用、换手和未来数据隔离；
+   - NAV 可用时点模型、前向数据 revision 与 T0 时间语义、增量 NAV 刷新保护（2026-08-02 新增）。
 4. 将原始测试输出、执行时间、Python 版本、Git commit、dirty 状态和测试文件数量写入独立机器可读产物。
 5. 禁止继续手工把某次历史 `passed` 数写入 README、planning 或 conclusion。
 
@@ -458,23 +461,35 @@ P3 只有在 P0、P1 完成并取得首个前向检查点后才允许启动。�
 
 ### P1 历史真实性
 
-- [x] 冻结策略实际产品的历史规则版本表建立（`config/otf_rule_versions.csv`；当前仅快照，历史窗口覆盖 0，诚实标记 NOT_ESTABLISHED）；
-- [x] 每笔历史订单可追溯规则版本（`order_audit_frame.rule_version_id`；冻结 879 笔订单覆盖率为 0，报告 `reports/historical_truth/order_rule_version_coverage.json`）；
+拆分为两组：审计机制建立（已完成）与历史证据覆盖（未完成）。
+
+审计机制建立：
+
+- [x] 历史规则版本表机制建立（`config/otf_rule_versions.csv` 与覆盖报告 `reports/historical_truth/order_rule_version_coverage.json`；当前为 CURRENT_SNAPSHOT_ONLY，实际覆盖率 0/879，诚实标记 NOT_ESTABLISHED）；
+- [x] 订单级规则版本追溯字段建立（`order_audit_frame.rule_version_id`；冻结 879 笔订单覆盖率为 0，报告存在但未满足验收）；
 - [x] NAV 可用时点或保守滞后模型建立（`nav_availability.py` DOMESTIC_T1_QDII_T2，C1/C2/C3/D1/B2LT 全部接线，16 个测试含未来数据不变性验收）；
 - [x] QDII 和跨市场时序专项通过（021778/050025 确认延迟 2 天与模型一致；验收测试覆盖全部信号）；
-- [x] 生命周期事件表建立（`config/otf_lifecycle_events.csv`；13 只成立事件有 catalog 证据，公告类事件无历史数据源显式标记 PIT_PARTIAL）；
+- [x] 生命周期事件表机制建立（`config/otf_lifecycle_events.csv`；13 只成立事件有 catalog 证据，公告类事件无历史数据源显式标记 PIT_PARTIAL）；
 - [x] 实际持仓和候选产品映射证据完整（13/13 HIGH+APPROVED，无同家族同暴露重复）；
 - [x] 独立来源 NAV/收益/费用样本核验通过（otf_mapped 24200 行 + otf_defensive 10186 行 100% 一致，10/13 产品覆盖）；
-- [x] 历史真实性 Gate 机器可读输出完成（`reports/historical_truth/historical_truth_gate.json`；未通过，研究状态保持 PIT_PARTIAL / RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT）。
+- [x] 历史真实性 Gate 机器可读输出建立（`reports/historical_truth/historical_truth_gate.json`；未通过，研究状态保持 PIT_PARTIAL / RETROSPECTIVE_RESEARCH_UNDER_PARTIAL_PIT）。
+
+历史证据覆盖（未完成，Gate 通过 3/6）：
+
+- [ ] 历史规则版本在提交日有效（覆盖率 0/879，0%）；
+- [ ] 生命周期公告类证据完整（13 只核心产品全部 PIT_PARTIAL，无清盘/暂停/恢复/合并等公告历史）；
+- [ ] 未用当前快照回填历史（当前规则仍是当前快照，非历史版本）。
 
 ### P2 新鲜 OOS
 
 - [x] B2-LT、C1、C3、M20 冻结版本登记（`config/otf_frozen_strategy_versions.csv`，生成脚本 `scripts/migrations/build_frozen_strategy_versions.py`，9 项冻结内容完整）；
 - [x] C2 和旧失败研究归档并停止调参（C2、s1_experiment、s1_s2_experiment 写入 `ARCHIVED.json`，决策 `ARCHIVED_PARAMETER_SEARCH_FORBIDDEN`）；
-- [x] T0 自动登记（`config/otf_t0_registry.json`；数据截止 2026-07-27 与执行日历末行一致，当前 `PENDING_CALENDAR_EXTENSION`，数据刷新后重跑脚本自动升级为 REGISTERED）；
-- [x] 前向数据 revision 机制建立（`config/data_revision_registry.json` + `scripts/migrations/record_data_revision.py`，7 个数据文件哈希跟踪，当前 CLEAN）；
-- [x] 前向影子账户与订单审计建立（`config/forward_shadow_schema.json` + `scripts/forward/validate_shadow_records.py`，决策/订单/日度净值勾稽链）；
+- [x] T0 自动登记机制（`config/otf_t0_registry.json` + `scripts/migrations/build_t0_registry.py`；T0 必须严格晚于冻结完成时间 2026-08-01 且首个前向日有按前向流程采集的数据；2026-07-28 至 07-31 为 POST_FREEZE_BACKFILLED_VALIDATION_WINDOW 不计入新鲜 OOS；当前 PENDING_CALENDAR_EXTENSION，日历扩展且数据采集后重跑脚本自动登记）；
+- [x] 前向数据 revision 机制建立（`config/data_revision_registry.json` + `scripts/migrations/record_data_revision.py`，7 个数据文件哈希跟踪，2026-08-02 刷新已记录 1 条，当前 CLEAN）；
+- [x] 增量 NAV 刷新保护（`scripts/migrations/refresh_nav_incremental.py`；落盘 refresh_report.json 与 provider_revision_report.csv；发现核心 NAV 修订时阻止追加该基金并暂停前向观察，退出码 2）；
+- [x] 前向影子账户与订单审计建立（`config/forward_shadow_schema.json` + `scripts/forward/validate_shadow_records.py`，决策/订单/日度净值勾稽链；`reports/forward_shadow/decisions/` 为空，前向记录为 0）；
 - [x] 前向升级 Gate 框架建立（`scripts/forward/forward_upgrade_gate.py`，9 条件全部接线，当前诚实输出 NOT_ELIGIBLE_FOR_PAPER_TRADE）；
+- [ ] 合法 T0 登记（等待 2026-08-03 之后的日历扩展与数据前向采集）；
 - [ ] 63 日阶段审核完成；
 - [ ] 252 日正式前向审核完成。
 

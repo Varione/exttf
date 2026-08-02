@@ -12,6 +12,7 @@
     "FROZEN_PARAMETER_CONTINUOUS_OOS",
     "FULL_GATE_IMPLEMENTATION",
     "FULL_REGRESSION_RECORDED_20260801",
+    "POST_FREEZE_DATA_REFRESH_RECORDED",
     "STEADY_STATE_TURNOVER_METRIC",
     "STRATEGY_ATTRIBUTION_COMPLETE",
     "TRUTH_SOURCE_FACTS",
@@ -19,29 +20,29 @@
   ],
   "failed_phases": [],
   "test_result": {
-    "record": "reports/test_regression/regression_20260801_113005.json",
-    "passed": 557,
+    "record": "reports/test_regression/regression_20260802_013337.json",
+    "passed": 601,
     "failed": 0,
     "errors": 0,
     "warnings": 0,
     "all_passed": true,
     "python_version": "3.12.13",
-    "git_commit": "32ebbcadb1467a48b5772270680aa9853be7f4ec",
+    "git_commit": "972e69b495d846a1c32af76858f16611090fecb3",
     "git_dirty": true,
-    "test_file_count": 37,
-    "total_elapsed_seconds": 874.79
+    "test_file_count": 40,
+    "total_elapsed_seconds": 1145.64
   },
   "git": {
-    "commit": "3bd2837",
-    "dirty": false,
-    "branch": ""
+    "commit": "972e69b",
+    "dirty": true,
+    "branch": "codex/backtest-data-audit"
   },
   "input_hashes": {
-    "db_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79",
+    "db_sha256": "e6f6c8da4d694d339ebe21eed83cccf34bf51d499ddc748e6186bebf688e291f",
     "rules_sha256": "fe133a27c9f06c7e3e95f12cce3c2157ff4ef2834fa432f95f3c60f44a229a98",
     "mapping_sha256": "5342f4cd400a6cebd812f9c8735377d0b99faddec1560bced7eceff9e5090251",
     "config_sha256": "22b8b1342d4decd8e35c8bbe153996e53ce244c69d57413631071e1a1fa93aa4",
-    "calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7"
+    "calendar_sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d"
   },
   "rule_counts_by_status": {
     "CONSERVATIVE_ASSUMPTION": 20,
@@ -60,13 +61,13 @@
   },
   "execution_calendar": {
     "path": "data/processed/execution_calendar/cn_execution_calendar.csv",
-    "sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+    "sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d",
     "source": "ETF_DAILY_DISTINCT_DATE_PLUS_4_OF_4_DOMESTIC_EQUITY_NAV_CONSENSUS",
     "consensus_count": 4,
     "coverage": {
       "min_date": "2005-02-23",
-      "max_date": "2026-07-27",
-      "count": 5207
+      "max_date": "2026-07-31",
+      "count": 5211
     },
     "fix_status": "REBUILT_20260730_FROM_ETF_DATES_PLUS_4OF4_CONSENSUS"
   },
@@ -275,7 +276,7 @@
       "mdd_pct": -10.0238
     },
     "freeze_manifest": "baseline_freeze_manifest.json",
-    "forward_observation": "PENDING_T0_CALENDAR_EXTENSION"
+    "forward_observation": "PENDING_T0_POST_FREEZE_OBSERVATION"
   },
   "p1_historical_truth": {
     "completed_components": [
@@ -385,12 +386,15 @@
       "generator": "scripts/migrations/build_t0_registry.py",
       "t0_status": "PENDING_CALENDAR_EXTENSION",
       "baseline_data_cutoff": "2026-07-27",
-      "note": "rerun generator after data refresh to auto-register true T0"
+      "baseline_freeze_local_date": "2026-08-01",
+      "note": "T0 must be strictly after the freeze completion time and have forward-collected NAV data; 2026-07-28..07-31 are POST_FREEZE_BACKFILLED_VALIDATION_WINDOW and never count as fresh OOS. Rerun the generator after the calendar extends beyond the freeze and the first post-freeze day has data."
     },
     "data_revision": {
       "path": "config/data_revision_registry.json",
       "tracked_files": 7,
       "verify_status": "CLEAN",
+      "revision_count": 1,
+      "last_revision": "2026-08-02T07:50:27",
       "rule": "any change to tracked data must be recorded before forward use"
     },
     "shadow_observation": {
@@ -398,6 +402,7 @@
       "validator": "scripts/forward/validate_shadow_records.py",
       "record_root": "reports/forward_shadow",
       "status": "NOT_STARTED_T0_PENDING",
+      "decision_records": 0,
       "min_fresh_sample": {
         "fresh_trading_days": 252,
         "quarterly_min_decisions": 4,

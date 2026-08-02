@@ -8,7 +8,7 @@
       "id": 1,
       "name": "P0 engineering gate",
       "status": "PASS",
-      "evidence": "{\"record\": \"reports/test_regression/regression_20260801_113005.json\", \"passed\": 557, \"failed\": 0, \"all_passed\": true}"
+      "evidence": "{\"record\": \"reports/test_regression/regression_20260802_013337.json\", \"passed\": 601, \"failed\": 0, \"errors\": 0, \"warnings\": 0, \"all_passed\": true, \"python_version\": \"3.12.13\", \"git_commit\": \"972e69b495d846a1c32af76858f16611090fecb3\", \"git_dirty\": true, \"test_file_count\": 40, \"total_elapsed_seconds\": 1145.64}"
     },
     {
       "id": 2,

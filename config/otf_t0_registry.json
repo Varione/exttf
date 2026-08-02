@@ -2,11 +2,19 @@
   "t0_date": null,
   "t0_status": "PENDING_CALENDAR_EXTENSION",
   "baseline_freeze_timestamp": "2026-08-01T12:30:00.000000+00:00",
+  "baseline_freeze_local_date": "2026-08-01",
   "baseline_git_commit": "3bd2837",
-  "data_cutoff_date": "2026-07-27",
-  "execution_calendar_last_date": "2026-07-27",
-  "execution_calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
-  "candidate_next_business_day": "2026-07-28",
+  "baseline_data_cutoff": "2026-07-27",
+  "post_freeze_backfill_window": {
+    "start": "2026-07-27",
+    "end_exclusive": "2026-08-01",
+    "classification": "POST_FREEZE_BACKFILLED_VALIDATION_WINDOW",
+    "note": "Dates in this window were backfilled during the post-freeze refresh; they validate tooling but are NOT fresh forward observations and cannot be counted as fresh OOS."
+  },
+  "execution_calendar_last_date": "2026-07-31",
+  "db_max_nav_date": "2026-07-31",
+  "execution_calendar_sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d",
+  "candidate_next_business_day": null,
   "rule_reference": "planning P2-2: T0 is the first available execution trading day after the clean baseline freeze; no backfitting with post-T0 data; modifications generate new versions; data revisions must be recorded; forward uses then-visible data and then-rules.",
-  "note": "Execution calendar and NAV data end at the baseline cutoff; no post-cutoff execution day exists yet. Rerun this script after a data refresh to auto-register the true T0. Non-weekend estimate is 2026-07-28 but the true T0 must come from the consensus calendar."
+  "note": "No execution calendar day exists after the freeze completion time (2026-08-01). Rerun after the calendar extends beyond the freeze."
 }

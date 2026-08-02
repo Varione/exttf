@@ -5,7 +5,7 @@
   "consensus_count": 4,
   "primary_source_max_date": "2026-07-17",
   "extension_start": "2026-07-20",
-  "extension_end": "2026-07-27",
+  "extension_end": "2026-07-31",
   "extension_codes": [
     "160706",
     "000008",
@@ -18,16 +18,20 @@
     "2026-07-22",
     "2026-07-23",
     "2026-07-24",
-    "2026-07-27"
+    "2026-07-27",
+    "2026-07-28",
+    "2026-07-29",
+    "2026-07-30",
+    "2026-07-31"
   ],
   "input_hashes": {
     "primary_db_sha256": "780f11cc5ebc17489a6f1703463837c2b78d5ab20b73ca60bf6db41acfd18e6c",
-    "otf_db_sha256": "dcc1d865998942948a4650957ae49e26357949a1b7f296b527986d1eafc40e79"
+    "otf_db_sha256": "e6f6c8da4d694d339ebe21eed83cccf34bf51d499ddc748e6186bebf688e291f"
   },
-  "calendar_sha256": "66bdb882ffe5edd342773310b57c53ffe6970f46ba6321c6f96b0033f1771ec7",
+  "calendar_sha256": "3b0a129a3a7dce902cb5e20c5cbbb8bf7f9ec538ab7ef0afec15736a8b607f5d",
   "coverage": {
     "min_date": "2005-02-23",
-    "max_date": "2026-07-27",
-    "count": 5207
+    "max_date": "2026-07-31",
+    "count": 5211
   }
 }
