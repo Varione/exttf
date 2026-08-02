@@ -20,17 +20,17 @@
   ],
   "failed_phases": [],
   "test_result": {
-    "record": "reports/test_regression/regression_20260802_013337.json",
+    "record": "reports/test_regression/regression_20260802_022405.json",
     "passed": 601,
     "failed": 0,
     "errors": 0,
     "warnings": 0,
     "all_passed": true,
-    "python_version": "3.12.13",
-    "git_commit": "972e69b495d846a1c32af76858f16611090fecb3",
-    "git_dirty": true,
+    "python_version": "3.12.13 | packaged by Anaconda, Inc. | (main, Jul  9 2026, 14:26:47) [MSC v.1942 64 bit (AMD64)]",
+    "git_commit": "6af16218507b7fa9d887f8f34eada09dcd771510",
+    "git_dirty": false,
     "test_file_count": 40,
-    "total_elapsed_seconds": 1145.64
+    "total_elapsed_seconds": 2131.75
   },
   "git": {
     "commit": "972e69b",

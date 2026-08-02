@@ -1,0 +1,172 @@
+{
+  "record_type": "FULL_REGRESSION_RECORD",
+  "timestamp": "2026-08-02T02:24:05.912918+00:00",
+  "interpreter": "D:\\miniconda\\envs\\agents\\python.exe",
+  "python_version": "3.12.13 | packaged by Anaconda, Inc. | (main, Jul  9 2026, 14:26:47) [MSC v.1942 64 bit (AMD64)]",
+  "git_commit": "6af16218507b7fa9d887f8f34eada09dcd771510",
+  "git_branch": "codex/backtest-data-audit",
+  "git_dirty": false,
+  "test_file_count": 40,
+  "test_files": [
+    "tests\\test_all_otf_allocation.py",
+    "tests\\test_build_otf_research_db.py",
+    "tests\\test_c3_low_turnover_momentum.py",
+    "tests\\test_c3_runner.py",
+    "tests\\test_candidate_strategies.py",
+    "tests\\test_core_satellite_momentum.py",
+    "tests\\test_cross_fund_holiday_adj.py",
+    "tests\\test_etf_otf_mapping.py",
+    "tests\\test_execution_calendar_integration.py",
+    "tests\\test_experiment_artifacts.py",
+    "tests\\test_extended_otf_assets.py",
+    "tests\\test_factor_artifact.py",
+    "tests\\test_full_otf_catalog.py",
+    "tests\\test_holiday_share_adjustment.py",
+    "tests\\test_low_turnover_core_satellite.py",
+    "tests\\test_mapped_otf_strategy.py",
+    "tests\\test_market_state.py",
+    "tests\\test_metadata_consistency.py",
+    "tests\\test_nav_availability.py",
+    "tests\\test_nav_refresh_incremental.py",
+    "tests\\test_otf_backtest.py",
+    "tests\\test_otf_trading_rules.py",
+    "tests\\test_p2_forward_mechanisms.py",
+    "tests\\test_phase3.py",
+    "tests\\test_product_selector.py",
+    "tests\\test_regime_predictor.py",
+    "tests\\test_repaired_core.py",
+    "tests\\test_reproducibility_audit.py",
+    "tests\\test_research_status.py",
+    "tests\\test_risk_parity.py",
+    "tests\\test_rl_meta.py",
+    "tests\\test_runner_wiring.py",
+    "tests\\test_schedule.py",
+    "tests\\test_signal_timing.py",
+    "tests\\test_smoke.py",
+    "tests\\test_state_allocation.py",
+    "tests\\test_strategy_attribution.py",
+    "tests\\test_strategy_validation.py",
+    "tests\\test_unified_experiment.py",
+    "tests\\test_walkforward_e2e.py"
+  ],
+  "total_elapsed_seconds": 2131.75,
+  "summary": {
+    "passed": 601,
+    "failed": 0,
+    "errors": 0,
+    "warnings": 0,
+    "all_passed": true
+  },
+  "batches": [
+    {
+      "batch_index": 1,
+      "batch_total": 5,
+      "files": [
+        "tests/test_walkforward_e2e.py",
+        "tests/test_strategy_validation.py",
+        "tests/test_strategy_attribution.py",
+        "tests/test_smoke.py",
+        "tests/test_reproducibility_audit.py"
+      ],
+      "return_code": 0,
+      "elapsed_seconds": 228.84,
+      "counts": {
+        "passed": 102
+      },
+      "log_file": "batch_01_of_05.log",
+      "stdout_tail": "........................................................................ [ 70%]\n..............................                                           [100%]\n102 passed in 227.23s (0:03:47)\n",
+      "stderr_tail": ""
+    },
+    {
+      "batch_index": 2,
+      "batch_total": 5,
+      "files": [
+        "tests/test_state_allocation.py",
+        "tests/test_schedule.py",
+        "tests/test_risk_parity.py",
+        "tests/test_experiment_artifacts.py",
+        "tests/test_runner_wiring.py",
+        "tests/test_product_selector.py",
+        "tests/test_otf_trading_rules.py",
+        "tests/test_otf_backtest.py",
+        "tests/test_signal_timing.py",
+        "tests/test_research_status.py",
+        "tests/test_c3_runner.py",
+        "tests/test_nav_availability.py",
+        "tests/test_p2_forward_mechanisms.py",
+        "tests/test_nav_refresh_incremental.py"
+      ],
+      "return_code": 0,
+      "elapsed_seconds": 156.11,
+      "counts": {
+        "passed": 250
+      },
+      "log_file": "batch_02_of_05.log",
+      "stdout_tail": "........................................................................ [ 28%]\n........................................................................ [ 57%]\n........................................................................ [ 86%]\n..................................                                       [100%]\n250 passed in 154.29s (0:02:34)\n",
+      "stderr_tail": ""
+    },
+    {
+      "batch_index": 3,
+      "batch_total": 5,
+      "files": [
+        "tests/test_unified_experiment.py"
+      ],
+      "return_code": 0,
+      "elapsed_seconds": 163.33,
+      "counts": {
+        "passed": 41
+      },
+      "log_file": "batch_03_of_05.log",
+      "stdout_tail": ".........................................                                [100%]\n41 passed in 160.99s (0:02:40)\n",
+      "stderr_tail": ""
+    },
+    {
+      "batch_index": 4,
+      "batch_total": 5,
+      "files": [
+        "tests/test_phase3.py",
+        "tests/test_mapped_otf_strategy.py",
+        "tests/test_low_turnover_core_satellite.py",
+        "tests/test_holiday_share_adjustment.py",
+        "tests/test_full_otf_catalog.py",
+        "tests/test_factor_artifact.py",
+        "tests/test_extended_otf_assets.py",
+        "tests/test_execution_calendar_integration.py",
+        "tests/test_etf_otf_mapping.py",
+        "tests/test_cross_fund_holiday_adj.py",
+        "tests/test_core_satellite_momentum.py",
+        "tests/test_candidate_strategies.py",
+        "tests/test_c3_low_turnover_momentum.py",
+        "tests/test_build_otf_research_db.py",
+        "tests/test_all_otf_allocation.py",
+        "tests/test_metadata_consistency.py",
+        "tests/test_market_state.py"
+      ],
+      "return_code": 0,
+      "elapsed_seconds": 660.35,
+      "counts": {
+        "passed": 171
+      },
+      "log_file": "batch_04_of_05.log",
+      "stdout_tail": "........................................................................ [ 42%]\n........................................................................ [ 84%]\n...........................                                              [100%]\n171 passed in 658.64s (0:10:58)\n",
+      "stderr_tail": ""
+    },
+    {
+      "batch_index": 5,
+      "batch_total": 5,
+      "files": [
+        "tests/test_rl_meta.py",
+        "tests/test_repaired_core.py",
+        "tests/test_regime_predictor.py"
+      ],
+      "return_code": 0,
+      "elapsed_seconds": 923.1,
+      "counts": {
+        "passed": 37
+      },
+      "log_file": "batch_05_of_05.log",
+      "stdout_tail": ".....................................                                    [100%]\n37 passed in 918.47s (0:15:18)\n",
+      "stderr_tail": ""
+    }
+  ]
+}

@@ -23,7 +23,7 @@ NO_PAPER_TRADE_CANDIDATE
 
 已确认的事实：
 
-- `reports/latest_research_status.json` 为唯一状态源，已覆盖全部研究并指向冻结重跑后的 run_id（`walkforward_20260801_121725` 等）；2026-08-02 全量回归记录 `reports/test_regression/regression_20260802_013337.json`（601 passed，40 个测试文件），覆盖当前全部测试；
+- `reports/latest_research_status.json` 为唯一状态源，已覆盖全部研究并指向冻结重跑后的 run_id（`walkforward_20260801_121725` 等）；2026-08-02 全量回归记录 `reports/test_regression/regression_20260802_022405.json`（601 passed，40 个测试文件，commit `6af1621` 干净工作树），覆盖当前全部测试；
 - 工程基线已在干净 commit `3bd2837` 上完成冻结重跑（WF/C1/C2/C3/M20/归因），输入哈希与封版前完全一致，产物 `baseline_freeze_manifest.json` 已生成；
 - 2026-08-02 完成数据增量刷新并写入 `config/data_revision_registry.json`（otf_expanded 新增 26,999 行、otf_mapped 新增 712 行、执行日历扩展至 2026-07-31）；7 月 28 日至 7 月 31 日属于事后回填，标记为 `POST_FREEZE_BACKFILLED_VALIDATION_WINDOW`，不得计入新鲜 OOS；
 - T0 定义修正（2026-08-02 审核）：T0 必须是严格晚于冻结完成时间（2026-08-01）且数据按前向流程采集的执行交易日；7 月 28 日早于冻结时间，不能作为 T0；当前 `config/otf_t0_registry.json` 为 `PENDING_CALENDAR_EXTENSION`，待日历扩展到冻结时间之后且首个前向日有数据时自动登记；
